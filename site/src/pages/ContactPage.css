@@ -1,0 +1,221 @@
+/* ===== ANIMATED SECTIONS ===== */
+.animated-section {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s ease;
+}
+
+.animated-section.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ===== CONTACT PAGE ===== */
+.contact-page {
+  padding-top: 0;
+}
+
+/* ===== CONTACT HERO ===== */
+.contact-hero {
+  background: var(--forest-green);
+  padding: 200px 48px 120px;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .contact-hero {
+    padding-top: 240px;
+  }
+}
+
+.contact-hero__inner {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.contact-hero__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--electric-yellow);
+  margin-bottom: 24px;
+}
+
+.contact-hero__eyebrow-bar {
+  display: inline-block;
+  width: 24px;
+  height: 2px;
+  background: var(--electric-yellow);
+}
+
+.contact-hero__title {
+  color: var(--base-white);
+  margin-bottom: 24px;
+}
+
+.contact-hero__subtitle {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ===== CONTACT CONTENT ===== */
+.contact-content {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 80px var(--gutter);
+}
+
+.contact-content__inner {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 64px;
+}
+
+@media (min-width: 1024px) {
+  .contact-content__inner {
+    grid-template-columns: 3fr 2fr;
+  }
+}
+
+/* ===== CONTACT FORM ===== */
+.contact-form-wrap {
+  min-height: 400px;
+}
+
+.contact-form__title {
+  color: var(--forest-green);
+  margin-bottom: 48px;
+  text-transform: uppercase;
+}
+
+.contact-form__row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 480px) {
+  .contact-form__row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.contact-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.contact-form__field label {
+  color: var(--on-surface-variant);
+}
+
+.contact-form__field input,
+.contact-form__field select,
+.contact-form__field textarea {
+  font-family: var(--font-body);
+  font-size: 16px;
+  padding: 16px;
+  border: 1px solid var(--outline-variant);
+  background: var(--base-white);
+  color: var(--contrast-charcoal);
+  transition: border-color var(--transition-normal);
+  outline: none;
+  border-radius: 0;
+  -webkit-appearance: none;
+}
+
+.contact-form__field input:focus,
+.contact-form__field select:focus,
+.contact-form__field textarea:focus {
+  border-color: var(--forest-green);
+  box-shadow: 0 0 0 3px rgba(45, 90, 39, 0.1);
+}
+
+.contact-form__field textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.contact-form__submit {
+  width: 100%;
+  margin-top: 16px;
+}
+
+@media (min-width: 480px) {
+  .contact-form__submit {
+    width: auto;
+  }
+}
+
+/* Success state */
+.contact-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+  animation: scaleIn 0.5s ease;
+}
+
+/* ===== CONTACT INFO ===== */
+.contact-info__title {
+  color: var(--forest-green);
+  text-transform: uppercase;
+  margin-bottom: 32px;
+}
+
+.contact-info__cards {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.contact-info__card {
+  display: flex;
+  gap: 20px;
+  padding: 24px;
+  border: 1px solid var(--outline-variant);
+  background: var(--surface-container-low);
+  transition: all var(--transition-normal);
+}
+
+.contact-info__card:hover {
+  border-color: var(--forest-green);
+  transform: translateX(4px);
+}
+
+.contact-info__icon {
+  font-size: 32px;
+  color: var(--electric-yellow);
+  flex-shrink: 0;
+}
+
+.contact-info__card-title {
+  color: var(--contrast-charcoal);
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.contact-info__line {
+  color: var(--on-surface-variant);
+  font-size: 14px;
+}
+
+/* ===== MAP ===== */
+.contact-map {
+  margin-top: 48px;
+}
+
+.contact-map__placeholder {
+  background: var(--surface-container);
+  border: 1px dashed var(--outline-variant);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  text-align: center;
+}

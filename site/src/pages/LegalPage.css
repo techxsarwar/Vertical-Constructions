@@ -1,0 +1,128 @@
+/* ===== ANIMATED SECTIONS ===== */
+.animated-section {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s ease;
+}
+
+.animated-section.in-view {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.legal-page {
+  padding-top: 100px;
+  padding-bottom: var(--section-padding);
+}
+
+@media (min-width: 768px) {
+  .legal-page {
+    padding-top: 120px;
+  }
+}
+
+.legal-hero {
+  background: var(--surface-container);
+  padding: 80px 0;
+  margin-bottom: 64px;
+  border-bottom: 4px solid var(--electric-yellow);
+}
+
+.legal-hero__title {
+  color: var(--contrast-charcoal);
+  margin-bottom: 16px;
+  text-transform: uppercase;
+}
+
+.legal-hero__date {
+  color: var(--forest-green);
+}
+
+.legal-content {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 64px;
+}
+
+@media (min-width: 1024px) {
+  .legal-content {
+    grid-template-columns: 3fr 1fr;
+  }
+}
+
+.legal-content__main h2 {
+  color: var(--forest-green);
+  font-size: 24px;
+  margin-top: 48px;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+}
+
+.legal-content__main h2:first-child {
+  margin-top: 0;
+}
+
+.legal-content__main p {
+  color: var(--on-surface-variant);
+  margin-bottom: 24px;
+}
+
+.legal-content__main ul {
+  list-style-type: disc;
+  padding-left: 24px;
+  margin-bottom: 24px;
+  color: var(--on-surface-variant);
+}
+
+.legal-content__main li {
+  margin-bottom: 8px;
+  line-height: 1.6;
+}
+
+.legal-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.legal-sidebar__box {
+  background: var(--surface-bright);
+  border: 1px solid var(--outline-variant);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.legal-sidebar__box.legal-sidebar__box--dark {
+  background: var(--contrast-charcoal);
+  border-color: var(--contrast-charcoal);
+}
+
+.legal-sidebar__box.legal-sidebar__box--dark .material-symbols-outlined {
+  color: var(--electric-yellow);
+  font-size: 40px;
+  margin-bottom: 8px;
+}
+
+.legal-sidebar__box h3 {
+  color: var(--contrast-charcoal);
+  border-bottom: 1px solid var(--outline-variant);
+  padding-bottom: 12px;
+  margin-bottom: 8px;
+}
+
+.legal-sidebar__box.legal-sidebar__box--dark h3 {
+  border-bottom-color: rgba(255,255,255,0.1);
+}
+
+.legal-sidebar__box a {
+  font-family: var(--font-body);
+  color: var(--forest-green);
+  font-weight: 500;
+  transition: color var(--transition-fast);
+}
+
+.legal-sidebar__box a:hover {
+  color: var(--electric-yellow);
+}

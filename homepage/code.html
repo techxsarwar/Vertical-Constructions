@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Vertical Constructions</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&amp;family=Manrope:wght@500;700&amp;family=Space+Grotesk:wght@400;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed-dim": "#c8c6c5",
+                        "surface-bright": "#fff9ef",
+                        "on-secondary-fixed-variant": "#23501e",
+                        "surface-container": "#f6edda",
+                        "secondary": "#3b6934",
+                        "on-background": "#1f1b10",
+                        "on-secondary-fixed": "#002201",
+                        "on-tertiary-container": "#5f5f5e",
+                        "safety-accent": "#FFD700",
+                        "on-primary": "#ffffff",
+                        "surface-variant": "#eae2cf",
+                        "surface-container-lowest": "#ffffff",
+                        "inverse-on-surface": "#f9f0dd",
+                        "error": "#ba1a1a",
+                        "primary-container": "#ffd700",
+                        "on-error-container": "#93000a",
+                        "error-container": "#ffdad6",
+                        "inverse-primary": "#e9c400",
+                        "secondary-container": "#b9eeab",
+                        "primary-fixed-dim": "#e9c400",
+                        "secondary-fixed": "#bcf0ae",
+                        "sustainability-accent": "#2D5A27",
+                        "on-tertiary-fixed-variant": "#474746",
+                        "contrast-charcoal": "#222222",
+                        "outline": "#7e775f",
+                        "on-surface-variant": "#4d4732",
+                        "on-tertiary": "#ffffff",
+                        "forest-green": "#2D5A27",
+                        "inverse-surface": "#343024",
+                        "base-white": "#FFFFFF",
+                        "tertiary-container": "#dcd9d9",
+                        "tertiary-fixed": "#e5e2e1",
+                        "primary-fixed": "#ffe16d",
+                        "background": "#fff9ef",
+                        "on-primary-container": "#705e00",
+                        "surface-container-highest": "#eae2cf",
+                        "secondary-fixed-dim": "#a1d494",
+                        "primary": "#705d00",
+                        "tertiary": "#5f5e5e",
+                        "on-primary-fixed-variant": "#544600",
+                        "electric-yellow": "#FFD700",
+                        "surface-dim": "#e1d9c7",
+                        "surface-container-low": "#fbf3e0",
+                        "on-primary-fixed": "#221b00",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed": "#1b1c1c",
+                        "outline-variant": "#d0c6ab",
+                        "on-surface": "#1f1b10",
+                        "surface-tint": "#705d00",
+                        "on-secondary": "#ffffff",
+                        "surface": "#fff9ef",
+                        "on-secondary-container": "#3f6d38",
+                        "surface-container-high": "#f0e7d5"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "container-max": "1440px",
+                        "gutter": "24px",
+                        "card-gap": "32px",
+                        "base": "8px",
+                        "section-padding": "120px"
+                    },
+                    "fontFamily": {
+                        "subheading": ["Manrope", "sans-serif"],
+                        "headline-lg": ["Space Grotesk", "sans-serif"],
+                        "body-md": ["Inter", "sans-serif"],
+                        "label-caps": ["Manrope", "sans-serif"],
+                        "headline-xl": ["Space Grotesk", "sans-serif"]
+                    },
+                    "fontSize": {
+                        "subheading": ["20px", { "lineHeight": "1.5", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "headline-lg": ["48px", { "lineHeight": "1.2", "fontWeight": "700" }],
+                        "body-md": ["16px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "1", "letterSpacing": "0.1em", "fontWeight": "700" }],
+                        "headline-xl": ["80px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-background text-on-background antialiased selection:bg-electric-yellow selection:text-contrast-charcoal">
+<!-- TopNavBar -->
+<header class="fixed top-0 w-full z-50 bg-white/95 dark:bg-zinc-950/95 backdrop-blur-md border-b border-green-900/10 dark:border-white/10 flat no-shadows hidden md:block">
+<div class="flex justify-between items-center w-full px-8 py-6 max-w-screen-2xl mx-auto">
+<div class="text-2xl font-black text-zinc-900 dark:text-white tracking-[1px]">Vertical Constructions</div>
+<nav class="flex gap-8">
+<!-- None active as this is Homepage intent -->
+<a class="font-['Space_Grotesk'] font-bold tracking-tighter uppercase text-zinc-400 dark:text-zinc-500 hover:text-yellow-500 transition-colors duration-300 active:scale-95 transition-transform" href="#">Projects</a>
+<a class="font-['Space_Grotesk'] font-bold tracking-tighter uppercase text-zinc-400 dark:text-zinc-500 hover:text-yellow-500 transition-colors duration-300 active:scale-95 transition-transform" href="#">Services</a>
+<a class="font-['Space_Grotesk'] font-bold tracking-tighter uppercase text-zinc-400 dark:text-zinc-500 hover:text-yellow-500 transition-colors duration-300 active:scale-95 transition-transform" href="#">Sustainability</a>
+<a class="font-['Space_Grotesk'] font-bold tracking-tighter uppercase text-zinc-400 dark:text-zinc-500 hover:text-yellow-500 transition-colors duration-300 active:scale-95 transition-transform" href="#">Contact</a>
+</nav>
+<button class="font-['Space_Grotesk'] font-bold tracking-tighter uppercase text-yellow-400 dark:text-yellow-400 hover:text-yellow-500 transition-colors duration-300 active:scale-95 transition-transform border-2 border-yellow-400 px-6 py-2">
+                Build Now
+            </button>
+</div>
+</header>
+<main class="md:pt-[100px]">
+<!-- Hero Section -->
+<section class="min-h-[921px] grid grid-cols-1 lg:grid-cols-2 max-w-screen-container-max mx-auto border-b border-forest-green/20 relative overflow-hidden">
+<!-- Left: White Void Typography -->
+<div class="bg-surface-bright flex flex-col justify-center p-12 lg:p-24 relative z-10">
+<div class="w-16 h-1 bg-electric-yellow mb-12"></div>
+<h1 class="font-headline-xl text-headline-xl text-forest-green mb-8 uppercase leading-[0.9]">
+                    WE BUILD THE FUTURE VERTICALLY.
+                </h1>
+<p class="font-subheading text-subheading text-on-surface-variant mb-12 max-w-lg">
+                    High-contrast engineering meets luxury architecture. We redefine cityscapes with unmatched precision and structural vibrancy.
+                </p>
+<a class="inline-flex justify-center items-center bg-electric-yellow text-contrast-charcoal font-label-caps text-label-caps py-6 px-12 uppercase tracking-widest hover:bg-forest-green hover:text-base-white transition-colors duration-300 w-max border border-transparent" href="#quote">
+                    Request a Quote
+                </a>
+</div>
+<!-- Right: Immersive Imagery -->
+<div class="relative min-h-[500px] lg:min-h-full bg-tertiary-fixed-dim overflow-hidden group">
+<div class="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105 saturate-150" data-alt="A striking architectural photograph of a modern, high-rise glass building stretching upwards into a clear sky. The image features a high-saturation, vibrant light-mode aesthetic with strong contrasts between the deep reflections in the glass and the brilliant structural elements. A mood of immense scale, industrial power, and refined luxury architecture is conveyed through the massive geometric shapes and precision engineering visible in the facade." style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBMJmV9oMuPRo7caBfDgxUBNDSmlfLnDNxRrq-oF_5OreAtPpfq3dxJRPWwCLZhPetCxlzI1F-vvzvxYLOi5Irb8J3qn9bALG8OTFw-PS_JIF1SufZ18u2K8JUV4VnOL4oLUpZJZLuOtWIJZyuElcG0brS9TDX3ZIPl0XLtPliJ4AsSiPvBWIAiIjSsZTsrF29rt5mceR_QfLn2Rir64ShnmJ4AXeGnpy4wNXH3LOHtB3Oz2W_dU_-Q9alJ8b3PzAYhAFV4-uXIPvs');">
+</div>
+<!-- Yellow Geometric Overlay -->
+<div class="absolute inset-0 border-[16px] border-electric-yellow/90 m-8 mix-blend-overlay pointer-events-none"></div>
+<div class="absolute top-1/4 right-1/4 w-64 h-64 border-4 border-electric-yellow rotate-12 opacity-80 pointer-events-none"></div>
+<div class="absolute bottom-1/4 left-1/4 w-32 h-32 border border-electric-yellow -rotate-6 opacity-60 pointer-events-none bg-electric-yellow/10"></div>
+</div>
+</section>
+<!-- Impact Section -->
+<section class="py-section-padding px-12 lg:px-24 max-w-screen-container-max mx-auto bg-surface">
+<div class="mb-24 flex flex-col md:flex-row justify-between items-start md:items-end gap-8 border-b border-forest-green pb-8">
+<div>
+<h2 class="font-headline-lg text-headline-lg text-forest-green uppercase">Engineered Impact</h2>
+<p class="font-subheading text-subheading text-on-surface-variant mt-4 max-w-2xl">
+                        Sustainability isn't an afterthought; it's structural. We integrate high-efficiency systems into the core of every massive undertaking.
+                    </p>
+</div>
+<div class="hidden md:flex gap-4">
+<span class="material-symbols-outlined text-4xl text-electric-yellow" style="font-variation-settings: 'wght' 200">architecture</span>
+<span class="material-symbols-outlined text-4xl text-forest-green" style="font-variation-settings: 'wght' 200">eco</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-card-gap">
+<!-- Impact Card 1 -->
+<div class="bg-surface-bright border border-forest-green p-8 group hover:shadow-2xl transition-shadow duration-300">
+<div class="flex items-center gap-3 mb-6 inline-flex bg-forest-green text-base-white font-label-caps text-label-caps py-2 px-4 uppercase rounded-full">
+<span class="material-symbols-outlined text-base">recycling</span>
+                        Zero Waste Protocol
+                    </div>
+<h3 class="font-subheading text-subheading text-contrast-charcoal mb-4 uppercase font-bold">Material Efficiency</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                        Our structural masonry and pre-fab processes guarantee a 40% reduction in onsite material waste, turning raw steel into refined form instantly.
+                    </p>
+</div>
+<!-- Impact Card 2 -->
+<div class="bg-surface-bright border border-forest-green p-8 group hover:shadow-2xl transition-shadow duration-300">
+<div class="flex items-center gap-3 mb-6 inline-flex bg-forest-green text-base-white font-label-caps text-label-caps py-2 px-4 uppercase rounded-full">
+<span class="material-symbols-outlined text-base">solar_power</span>
+                        Energy Positive
+                    </div>
+<h3 class="font-subheading text-subheading text-contrast-charcoal mb-4 uppercase font-bold">Solar Integration</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                        Glass facades engineered not just for views, but for power generation. Seamlessly blending heavy industry with renewable technology.
+                    </p>
+</div>
+<!-- Impact Card 3 -->
+<div class="bg-surface-bright border border-forest-green p-8 group hover:shadow-2xl transition-shadow duration-300">
+<div class="flex items-center gap-3 mb-6 inline-flex bg-forest-green text-base-white font-label-caps text-label-caps py-2 px-4 uppercase rounded-full">
+<span class="material-symbols-outlined text-base">water_drop</span>
+                        Water Conservation
+                    </div>
+<h3 class="font-subheading text-subheading text-contrast-charcoal mb-4 uppercase font-bold">Closed-Loop Systems</h3>
+<p class="font-body-md text-body-md text-on-surface-variant">
+                        Advanced plumbing architectures that recapture and filter environmental water, ensuring our towering achievements remain responsible ground-level citizens.
+                    </p>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full py-32 px-12 mt-[120px] border-t-8 border-yellow-400 bg-zinc-900 dark:bg-black flat pb-32 md:pb-32">
+<div class="grid grid-cols-1 md:grid-cols-4 gap-16 max-w-screen-2xl mx-auto">
+<div class="col-span-1 md:col-span-1">
+<span class="text-yellow-400 font-black text-xl mb-4 block">Vertical Constructions</span>
+<p class="font-['Space_Grotesk'] text-sm tracking-normal uppercase text-zinc-500 mt-8">
+                    © 2024 Vertical Constructions. All Rights Reserved. Engineered for Excellence.
+                </p>
+</div>
+<div class="col-span-1 md:col-span-3 flex flex-col md:flex-row gap-12 md:justify-end">
+<a class="font-['Space_Grotesk'] text-sm tracking-normal uppercase text-zinc-500 hover:text-white transition-all duration-300" href="#">Residential</a>
+<a class="font-['Space_Grotesk'] text-sm tracking-normal uppercase text-zinc-500 hover:text-white transition-all duration-300" href="#">Commercial</a>
+<a class="font-['Space_Grotesk'] text-sm tracking-normal uppercase text-zinc-500 hover:text-white transition-all duration-300" href="#">Industrial</a>
+<a class="font-['Space_Grotesk'] text-sm tracking-normal uppercase text-zinc-500 hover:text-white transition-all duration-300" href="#">Sustainability Report</a>
+</div>
+</div>
+</footer>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 w-full z-50 md:hidden border-t-2 border-yellow-400 shadow-[0_-10px_20px_rgba(0,0,0,0.2)] bg-[#004d00] dark:bg-emerald-950 pb-safe">
+<div class="flex justify-around items-center px-4 py-3">
+<a class="flex flex-col items-center justify-center text-yellow-400 font-bold scale-110 font-['Space_Grotesk'] text-[10px] tracking-widest uppercase hover:bg-green-800 transition-colors Active: tactile duration-150 p-2 rounded" href="#">
+<span class="material-symbols-outlined mb-1">home</span>
+                Home
+            </a>
+<a class="flex flex-col items-center justify-center text-white/60 font-['Space_Grotesk'] text-[10px] font-black tracking-widest uppercase hover:bg-green-800 transition-colors Active: tactile scale-90 duration-150 p-2 rounded" href="#">
+<span class="material-symbols-outlined mb-1">architecture</span>
+                Projects
+            </a>
+<a class="flex flex-col items-center justify-center text-white/60 font-['Space_Grotesk'] text-[10px] font-black tracking-widest uppercase hover:bg-green-800 transition-colors Active: tactile scale-90 duration-150 p-2 rounded" href="#">
+<span class="material-symbols-outlined mb-1">eco</span>
+                Impact
+            </a>
+<a class="flex flex-col items-center justify-center text-white/60 font-['Space_Grotesk'] text-[10px] font-black tracking-widest uppercase hover:bg-green-800 transition-colors Active: tactile scale-90 duration-150 p-2 rounded" href="#">
+<span class="material-symbols-outlined mb-1">menu</span>
+                Menu
+            </a>
+</div>
+</nav>
+</body></html>
