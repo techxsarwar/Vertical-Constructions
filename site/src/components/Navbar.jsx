@@ -12,12 +12,23 @@ const NAV_LINKS = [
 export default function Navbar() {
   const location = useLocation()
   const [scrolled, setScrolled] = useState(false)
+  const [isDark, setIsDark] = useState(false)
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', onScroll, { passive: true })
+    
+    // Check initial preference
+    const isDarkPref = document.documentElement.classList.contains('dark-theme')
+    setIsDark(isDarkPref)
+    
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  const toggleTheme = () => {
+    document.documentElement.classList.toggle('dark-theme')
+    setIsDark(!isDark)
+  }
 
   return (
     <header className={`navbar ${scrolled ? 'navbar--scrolled' : ''}`} id="main-navbar">
@@ -41,9 +52,20 @@ export default function Navbar() {
           ))}
         </nav>
 
-        <Link to="/contact" className="btn-outline navbar__cta" id="nav-cta">
-          Build Now
-        </Link>
+        <div className="navbar__actions">
+          <button 
+            className="navbar__theme-toggle" 
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+          >
+            <span className="material-symbols-outlined">
+              {isDark ? 'light_mode' : 'dark_mode'}
+            </span>
+          </button>
+          <Link to="/contact" className="btn-outline navbar__cta" id="nav-cta">
+            Build Now
+          </Link>
+        </div>
       </div>
     </header>
   )

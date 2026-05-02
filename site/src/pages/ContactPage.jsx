@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import 'leaflet/dist/leaflet.css'
 import './ContactPage.css'
 
 function useIntersection(ref) {
@@ -204,19 +206,25 @@ export default function ContactPage() {
               ))}
             </div>
 
-            {/* Map placeholder */}
+            {/* Interactive Map */}
             <div className="contact-map">
-              <div className="contact-map__placeholder">
-                <span
-                  className="material-symbols-outlined"
-                  style={{ fontSize: 48, color: 'var(--electric-yellow)', fontVariationSettings: "'wght' 200" }}
-                >
-                  map
-                </span>
-                <p className="label-caps" style={{ marginTop: 12, color: 'var(--on-surface-variant)' }}>
-                  Interactive Map Coming Soon
-                </p>
-              </div>
+              <MapContainer 
+                center={[28.6258, 77.3786]} 
+                zoom={14} 
+                scrollWheelZoom={false}
+                style={{ height: '100%', width: '100%' }}
+              >
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+                  url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                />
+                <Marker position={[28.6258, 77.3786]}>
+                  <Popup>
+                    <strong>Vertical Constructions HQ</strong><br />
+                    Sector 62, Noida
+                  </Popup>
+                </Marker>
+              </MapContainer>
             </div>
           </AnimatedSection>
         </div>

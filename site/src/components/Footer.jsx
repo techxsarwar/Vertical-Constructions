@@ -36,7 +36,7 @@ export default function Footer() {
           <Link to="/about" className="footer__link">About Us</Link>
           <Link to="/contact" className="footer__link">Contact</Link>
           <Link to="/#sustainability" className="footer__link">Sustainability</Link>
-          <Link to="/contact" className="footer__link">Careers</Link>
+          <Link to="/careers" className="footer__link">Careers</Link>
         </div>
 
         <div className="footer__contact-col">

@@ -367,3 +367,34 @@ button {
   transform: translateY(0);
   transition: all 0.4s ease;
 }
+
+/* ===== DARK MODE TOKENS ===== */
+.dark-theme {
+  --base-white: #121212;
+  --contrast-charcoal: #ffffff;
+  
+  --surface: #0a0a0a;
+  --surface-bright: #141414;
+  --surface-dim: #050505;
+  --surface-container: #1a1a1a;
+  --surface-container-low: #141414;
+  --surface-container-high: #242424;
+  --surface-container-highest: #2e2e2e;
+  --surface-container-lowest: #000000;
+  --surface-variant: #2e2e2e;
+
+  --on-surface: #e6e6e6;
+  --on-surface-variant: #a3a3a3;
+  --on-background: #e6e6e6;
+  --outline: #555555;
+  --outline-variant: #333333;
+
+  --inverse-surface: #e6e6e6;
+  --inverse-on-surface: #121212;
+
+  --navbar-bg: rgba(10, 10, 10, 0.95);
+}
+
+.dark-theme .portfolio-bloom {
+  border-color: var(--outline-variant);
+}
