@@ -724,19 +724,40 @@ if TELEGRAM_BOT_TOKEN and TELEGRAM_ADMIN_CHAT_ID:
             projects = get_all_projects()
             jobs = get_all_jobs()
             subs = get_all_subscribers()
+            msgs = get_all_messages()
+            fleet = get_all_fleet()
             
+            # Chart 1: System Overview (Bar)
             plt.figure(figsize=(6, 4))
             categories = ['Projects', 'Active Jobs', 'Subscribers']
             values = [len(projects), len(jobs), len(subs)]
             plt.bar(categories, values, color=['#e6b800', '#2d2d2d', '#009688'])
             plt.title('Database Overview')
             
-            buf = io.BytesIO()
-            plt.savefig(buf, format='png')
-            buf.seek(0)
+            buf1 = io.BytesIO()
+            plt.savefig(buf1, format='png')
+            buf1.seek(0)
+            plt.close()
+
+            # Chart 2: Operational Data (Pie)
+            plt.figure(figsize=(6, 4))
+            labels = ['Fleet Vehicles', 'Recent Inquiries']
+            sizes = [len(fleet), len(msgs)]
+            # Prevent empty pie chart crash
+            if sum(sizes) == 0:
+                sizes = [1, 1]
+                labels = ['No Fleet Data', 'No Inquiries Data']
+
+            plt.pie(sizes, labels=labels, autopct='%1.1f%%', colors=['#4CAF50', '#2196F3'])
+            plt.title('Fleet vs Inquiries')
+            
+            buf2 = io.BytesIO()
+            plt.savefig(buf2, format='png')
+            buf2.seek(0)
             plt.close()
             
-            await context.bot.send_photo(chat_id=chat_id, photo=buf, caption="📈 Current Database Overview")
+            await context.bot.send_photo(chat_id=chat_id, photo=buf1, caption="📊 System Overview")
+            await context.bot.send_photo(chat_id=chat_id, photo=buf2, caption="🥧 Operational Pie Chart")
             await send_status_message_direct(context.bot)
 
         # --- Broadcast / Newsletter ---
