@@ -38,8 +38,10 @@ bot_running = False
     ADD_JOB_DEPARTMENT,
     ADD_JOB_LOCATION,
     ADD_JOB_TYPE,
-    SET_NOTICE_TEXT
-) = range(8)
+    SET_NOTICE_TEXT,
+    SET_CONTACT_PHONE,
+    SET_CONTACT_EMAIL
+) = range(10)
 
 def is_admin(chat_id: int) -> bool:
     return str(chat_id) == str(TELEGRAM_ADMIN_CHAT_ID)
@@ -76,6 +78,14 @@ if TELEGRAM_BOT_TOKEN and TELEGRAM_ADMIN_CHAT_ID:
                 [
                     InlineKeyboardButton("🏗️ Add Project", callback_data="start_project_flow"),
                     InlineKeyboardButton("💼 Add Job", callback_data="start_job_flow"),
+                ],
+                [
+                    InlineKeyboardButton("📞 Update Phone", callback_data="start_phone_flow"),
+                    InlineKeyboardButton("✉️ Update Email", callback_data="start_email_flow"),
+                ],
+                [
+                    InlineKeyboardButton("🚚 View Fleet", callback_data="view_fleet"),
+                    InlineKeyboardButton("👷 View Vendors", callback_data="view_vendors"),
                 ],
                 [
                     InlineKeyboardButton("📬 View Inquiries", callback_data="view_messages"),
@@ -211,6 +221,36 @@ if TELEGRAM_BOT_TOKEN and TELEGRAM_ADMIN_CHAT_ID:
                 clear_messages()
                 keyboard = [[InlineKeyboardButton("🔙 Back to Menu", callback_data="refresh_status")]]
                 await query.edit_message_text("✅ All contact inquiries cleared from the database.", reply_markup=InlineKeyboardMarkup(keyboard))
+                
+            elif data == "view_fleet":
+                fleet = get_all_fleet()
+                if not fleet:
+                    keyboard = [[InlineKeyboardButton("🔙 Back to Menu", callback_data="refresh_status")]]
+                    await query.edit_message_text("🚚 No fleet data found.", reply_markup=InlineKeyboardMarkup(keyboard))
+                    return
+                
+                reply = "🚚 **Fleet Status:**\n\n"
+                for f in fleet[:10]:
+                    reply += f"🔹 **{f['name']}** ({f['type']})\n"
+                    reply += f"   Status: {f['status']} | Loc: {f['location']}\n\n"
+                
+                keyboard = [[InlineKeyboardButton("🔙 Back to Menu", callback_data="refresh_status")]]
+                await query.edit_message_text(reply, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+
+            elif data == "view_vendors":
+                vendors = get_all_vendors()
+                if not vendors:
+                    keyboard = [[InlineKeyboardButton("🔙 Back to Menu", callback_data="refresh_status")]]
+                    await query.edit_message_text("👷 No vendor data found.", reply_markup=InlineKeyboardMarkup(keyboard))
+                    return
+                
+                reply = "👷 **Vendors:**\n\n"
+                for v in vendors[:10]:
+                    reply += f"🔹 **{v['name']}**\n"
+                    reply += f"   Status: {v['status']} | Rating: {v['rating']}\n\n"
+                
+                keyboard = [[InlineKeyboardButton("🔙 Back to Menu", callback_data="refresh_status")]]
+                await query.edit_message_text(reply, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
 
         # --- Project Creation Wizard Handler ---
         async def start_project_flow(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -476,6 +516,59 @@ if TELEGRAM_BOT_TOKEN and TELEGRAM_ADMIN_CHAT_ID:
             await send_status_message_direct(context.bot)
             return ConversationHandler.END
 
+        # --- Contact Info Handlers ---
+        async def start_phone_flow(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            query = update.callback_query
+            chat_id = query.message.chat.id if query else update.effective_chat.id
+            if not is_admin(chat_id):
+                if query:
+                    await query.answer("⛔ Unauthorized.", show_alert=True)
+                return ConversationHandler.END
+                
+            keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_flow")]]
+            text = "📞 **Update Contact Phone**\n\nPlease enter the new phone number:"
+            if query:
+                await query.answer()
+                await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+            else:
+                await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+            return SET_CONTACT_PHONE
+
+        async def set_contact_phone(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            if not is_admin(update.effective_chat.id):
+                return ConversationHandler.END
+            txt = update.message.text.strip()
+            update_setting("contactPhone", txt)
+            await update.message.reply_text(f"✅ Contact phone set to: `{txt}`", parse_mode="Markdown")
+            await send_status_message_direct(context.bot)
+            return ConversationHandler.END
+
+        async def start_email_flow(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            query = update.callback_query
+            chat_id = query.message.chat.id if query else update.effective_chat.id
+            if not is_admin(chat_id):
+                if query:
+                    await query.answer("⛔ Unauthorized.", show_alert=True)
+                return ConversationHandler.END
+                
+            keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_flow")]]
+            text = "✉️ **Update Contact Email**\n\nPlease enter the new email address:"
+            if query:
+                await query.answer()
+                await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+            else:
+                await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+            return SET_CONTACT_EMAIL
+
+        async def set_contact_email(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            if not is_admin(update.effective_chat.id):
+                return ConversationHandler.END
+            txt = update.message.text.strip()
+            update_setting("contactEmail", txt)
+            await update.message.reply_text(f"✅ Contact email set to: `{txt}`", parse_mode="Markdown")
+            await send_status_message_direct(context.bot)
+            return ConversationHandler.END
+
         # Cancellation Handlers
         async def cancel_flow(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ Action cancelled.")
@@ -563,6 +656,31 @@ async def lifespan(app: FastAPI):
                 ],
             )
             bot_app.add_handler(notice_conv)
+
+            # Register Contact Handlers
+            phone_conv = ConversationHandler(
+                entry_points=[CallbackQueryHandler(start_phone_flow, pattern="^start_phone_flow$")],
+                states={
+                    SET_CONTACT_PHONE: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_contact_phone)],
+                },
+                fallbacks=[
+                    CommandHandler("cancel", cancel_flow),
+                    CallbackQueryHandler(cancel_flow_cb, pattern="^cancel_flow$")
+                ],
+            )
+            bot_app.add_handler(phone_conv)
+
+            email_conv = ConversationHandler(
+                entry_points=[CallbackQueryHandler(start_email_flow, pattern="^start_email_flow$")],
+                states={
+                    SET_CONTACT_EMAIL: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_contact_email)],
+                },
+                fallbacks=[
+                    CommandHandler("cancel", cancel_flow),
+                    CallbackQueryHandler(cancel_flow_cb, pattern="^cancel_flow$")
+                ],
+            )
+            bot_app.add_handler(email_conv)
 
             # Register Command Handlers
             bot_app.add_handler(CommandHandler("start", start_command))
