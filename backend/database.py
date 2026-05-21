@@ -2,7 +2,11 @@ import os
 import sqlite3
 import json
 
-DB_PATH = os.path.join(os.path.dirname(__file__), "vertical_constructions.db")
+# Use Render persistent disk directory /data if it exists and is writable, otherwise fall back to local directory
+if os.path.exists("/data") and os.access("/data", os.W_OK):
+    DB_PATH = "/data/vertical_constructions.db"
+else:
+    DB_PATH = os.path.join(os.path.dirname(__file__), "vertical_constructions.db")
 
 def get_db_connection():
     conn = sqlite3.connect(DB_PATH)

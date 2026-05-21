@@ -27,8 +27,22 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_ADMIN_CHAT_ID = os.getenv("TELEGRAM_ADMIN_CHAT_ID")
 
 # --- Telegram Bot Commands & Lifecycle ---
-# Import telegram libraries only inside bot functions to prevent startup crashes if not installed
 bot_running = False
+
+# Conversation States
+(
+    ADD_PROJECT_TITLE,
+    ADD_PROJECT_CATEGORY,
+    ADD_PROJECT_IMAGE,
+    ADD_JOB_TITLE,
+    ADD_JOB_DEPARTMENT,
+    ADD_JOB_LOCATION,
+    ADD_JOB_TYPE,
+    SET_NOTICE_TEXT
+) = range(8)
+
+def is_admin(chat_id: int) -> bool:
+    return str(chat_id) == str(TELEGRAM_ADMIN_CHAT_ID)
 
 async def send_telegram_notification(bot, text: str):
     if bot and TELEGRAM_ADMIN_CHAT_ID:
@@ -39,153 +53,441 @@ async def send_telegram_notification(bot, text: str):
 
 if TELEGRAM_BOT_TOKEN and TELEGRAM_ADMIN_CHAT_ID:
     try:
-        from telegram import Update
-        from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+        from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+        from telegram.ext import (
+            ApplicationBuilder,
+            CommandHandler,
+            ContextTypes,
+            CallbackQueryHandler,
+            ConversationHandler,
+            MessageHandler,
+            filters
+        )
 
-        # Command: /start
-        async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-            if str(update.effective_chat.id) != str(TELEGRAM_ADMIN_CHAT_ID):
-                await update.message.reply_text("⛔ Unauthorized. Access denied.")
-                return
+        def get_admin_keyboard(settings):
+            m_mode = settings.get("maintenanceMode")
+            maintenance_btn_text = "🟢 Disable Maintenance" if m_mode else "🔴 Enable Maintenance"
             
-            help_text = (
-                "🏗️ **Vertical Constructions Bot Controls**\n\n"
-                "Here are the available commands:\n"
-                "• `/status` - Current site status and notices\n"
-                "• `/maintenance <on|off>` - Toggle website maintenance mode\n"
-                "• `/notice <message>` - Set marquee banner notice (empty to clear)\n"
-                "• `/addproject Title | Category | [Image URL]` - Publish a featured project\n"
-                "• `/addjob Title | Department | Location | Type` - Publish a job listing\n"
-                "• `/messages` - View last 5 contact inquiries\n"
-                "• `/clearmessages` - Clear all inquiries from database"
-            )
-            await update.message.reply_text(help_text, parse_mode="Markdown")
+            keyboard = [
+                [
+                    InlineKeyboardButton(maintenance_btn_text, callback_data="toggle_maintenance"),
+                    InlineKeyboardButton("📝 Notice Banner", callback_data="start_notice_flow"),
+                ],
+                [
+                    InlineKeyboardButton("🏗️ Add Project", callback_data="start_project_flow"),
+                    InlineKeyboardButton("💼 Add Job", callback_data="start_job_flow"),
+                ],
+                [
+                    InlineKeyboardButton("📬 View Inquiries", callback_data="view_messages"),
+                    InlineKeyboardButton("🗑️ Clear Inquiries", callback_data="confirm_clear_messages"),
+                ],
+                [
+                    InlineKeyboardButton("🔄 Refresh Dashboard", callback_data="refresh_status"),
+                ]
+            ]
+            return InlineKeyboardMarkup(keyboard)
 
-        # Command: /status
-        async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-            if str(update.effective_chat.id) != str(TELEGRAM_ADMIN_CHAT_ID):
-                return
+        async def send_status_message(update: Optional[Update], context: ContextTypes.DEFAULT_TYPE, query=None):
             settings = get_all_settings()
             projects = get_all_projects()
             jobs = get_all_jobs()
             messages = get_all_messages()
             
-            m_mode = "🔴 ON (Maintenance Screen Active)" if settings.get("maintenanceMode") else "🟢 OFF (Public Site Live)"
-            notice = settings.get("siteNotice") or "*None*"
+            m_mode_str = "🔴 ON (Maintenance Screen Active)" if settings.get("maintenanceMode") else "🟢 OFF (Public Site Live)"
+            notice_str = settings.get("siteNotice") or "*None*"
             
             text = (
-                f"📊 **Vertical Constructions Live Status**\n\n"
-                f"• **Maintenance Mode**: {m_mode}\n"
-                f"• **Notice Banner**: {notice}\n"
+                f"🏗️ **Vertical Constructions Control Panel**\n\n"
+                f"📊 **Current Live Status**:\n"
+                f"• **Maintenance Mode**: {m_mode_str}\n"
+                f"• **Notice Banner**: {notice_str}\n"
                 f"• **Contact Email**: `{settings.get('contactEmail')}`\n"
                 f"• **Contact Phone**: `{settings.get('contactPhone')}`\n\n"
                 f"📈 **Database Stats**:\n"
                 f"• Total Projects: {len(projects)}\n"
                 f"• Total Active Jobs: {len(jobs)}\n"
-                f"• Pending Inquiries: {len(messages)}"
+                f"• Pending Inquiries: {len(messages)}\n\n"
+                f"👇 *Use the buttons below to manage the site:*"
             )
-            await update.message.reply_text(text, parse_mode="Markdown")
-
-        # Command: /maintenance <on|off>
-        async def maintenance_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-            if str(update.effective_chat.id) != str(TELEGRAM_ADMIN_CHAT_ID):
-                return
             
-            args = context.args
-            if not args or args[0].lower() not in ["on", "off"]:
-                await update.message.reply_text("⚠️ Usage: `/maintenance on` or `/maintenance off`")
+            reply_markup = get_admin_keyboard(settings)
+            
+            if query:
+                await query.edit_message_text(text, parse_mode="Markdown", reply_markup=reply_markup)
+            elif update:
+                await update.message.reply_text(text, parse_mode="Markdown", reply_markup=reply_markup)
+
+        async def send_status_message_direct(bot):
+            settings = get_all_settings()
+            projects = get_all_projects()
+            jobs = get_all_jobs()
+            messages = get_all_messages()
+            m_mode_str = "🔴 ON (Maintenance Screen Active)" if settings.get("maintenanceMode") else "🟢 OFF (Public Site Live)"
+            notice_str = settings.get("siteNotice") or "*None*"
+            
+            text = (
+                f"🏗️ **Vertical Constructions Control Panel**\n\n"
+                f"📊 **Current Live Status**:\n"
+                f"• **Maintenance Mode**: {m_mode_str}\n"
+                f"• **Notice Banner**: {notice_str}\n"
+                f"• **Contact Email**: `{settings.get('contactEmail')}`\n"
+                f"• **Contact Phone**: `{settings.get('contactPhone')}`\n\n"
+                f"📈 **Database Stats**:\n"
+                f"• Total Projects: {len(projects)}\n"
+                f"• Total Active Jobs: {len(jobs)}\n"
+                f"• Pending Inquiries: {len(messages)}\n\n"
+                f"👇 *Use the buttons below to manage the site:*"
+            )
+            reply_markup = get_admin_keyboard(settings)
+            try:
+                await bot.send_message(chat_id=TELEGRAM_ADMIN_CHAT_ID, text=text, parse_mode="Markdown", reply_markup=reply_markup)
+            except Exception as e:
+                print(f"Error sending direct status message: {e}")
+
+        # Command Handlers
+        async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            if not is_admin(update.effective_chat.id):
+                await update.message.reply_text("⛔ Unauthorized. Access denied.")
+                return
+            await send_status_message(update, context)
+
+        async def status_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            if not is_admin(update.effective_chat.id):
+                return
+            await send_status_message(update, context)
+
+        # Callback Query Handler for static buttons
+        async def button_callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            query = update.callback_query
+            if not is_admin(query.message.chat.id):
+                await query.answer("⛔ Unauthorized.", show_alert=True)
                 return
                 
-            is_on = args[0].lower() == "on"
-            update_setting("maintenanceMode", is_on)
+            await query.answer()
+            data = query.data
             
-            status_str = "ENABLED (Site is now showing maintenance screen)" if is_on else "DISABLED (Site is now live)"
-            await update.message.reply_text(f"✅ Maintenance Mode has been **{status_str}**.")
+            if data == "toggle_maintenance":
+                settings = get_all_settings()
+                new_mode = not settings.get("maintenanceMode", False)
+                update_setting("maintenanceMode", new_mode)
+                await send_status_message(None, context, query=query)
+                
+            elif data == "refresh_status":
+                await send_status_message(None, context, query=query)
+                
+            elif data == "view_messages":
+                inquiries = get_all_messages()
+                if not inquiries:
+                    keyboard = [[InlineKeyboardButton("🔙 Back to Menu", callback_data="refresh_status")]]
+                    await query.edit_message_text("📬 No pending inquiries in the database.", reply_markup=InlineKeyboardMarkup(keyboard))
+                    return
+                    
+                latest = inquiries[:5]
+                reply = "📬 **Latest 5 Contact Inquiries:**\n\n"
+                for m in latest:
+                    reply += f"🔹 **#{m['id']} - {m['name']}** ({m['date']})\n"
+                    reply += f"📧 `{m['email']}`\n"
+                    reply += f"💬 *{m['message']}*\n\n"
+                    
+                if len(inquiries) > 5:
+                    reply += f"_(And {len(inquiries) - 5} more inquiries in database)_\n\n"
+                    
+                keyboard = [
+                    [InlineKeyboardButton("🗑️ Clear Inquiries", callback_data="confirm_clear_messages")],
+                    [InlineKeyboardButton("🔙 Back to Menu", callback_data="refresh_status")]
+                ]
+                await query.edit_message_text(reply, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+                
+            elif data == "confirm_clear_messages":
+                keyboard = [
+                    [
+                        InlineKeyboardButton("🗑️ Yes, Clear All", callback_data="execute_clear_messages"),
+                        InlineKeyboardButton("❌ No, Cancel", callback_data="refresh_status")
+                    ]
+                ]
+                await query.edit_message_text("⚠️ Are you sure you want to clear ALL contact inquiries from the database? This cannot be undone.", reply_markup=InlineKeyboardMarkup(keyboard))
+                
+            elif data == "execute_clear_messages":
+                clear_messages()
+                keyboard = [[InlineKeyboardButton("🔙 Back to Menu", callback_data="refresh_status")]]
+                await query.edit_message_text("✅ All contact inquiries cleared from the database.", reply_markup=InlineKeyboardMarkup(keyboard))
 
-        # Command: /notice <message>
-        async def notice_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-            if str(update.effective_chat.id) != str(TELEGRAM_ADMIN_CHAT_ID):
-                return
-            
-            notice_text = " ".join(context.args).strip()
-            update_setting("siteNotice", notice_text)
-            
-            if notice_text:
-                await update.message.reply_text(f"✅ Notice banner set to:\n\"{notice_text}\"")
+        # --- Project Creation Wizard Handler ---
+        async def start_project_flow(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            query = update.callback_query
+            chat_id = query.message.chat.id if query else update.effective_chat.id
+            if not is_admin(chat_id):
+                if query:
+                    await query.answer("⛔ Unauthorized.", show_alert=True)
+                return ConversationHandler.END
+                
+            keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_flow")]]
+            if query:
+                await query.answer()
+                await query.edit_message_text(
+                    "🏗️ **Add Project Wizard**\n\nPlease enter the **Title** of the new project (or type /cancel):",
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
             else:
-                await update.message.reply_text("✅ Notice banner cleared.")
+                await update.message.reply_text(
+                    "🏗️ **Add Project Wizard**\n\nPlease enter the **Title** of the new project (or type /cancel):",
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
+                
+            return ADD_PROJECT_TITLE
 
-        # Command: /addproject Title | Category | [Image URL]
-        async def addproject_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-            if str(update.effective_chat.id) != str(TELEGRAM_ADMIN_CHAT_ID):
-                return
-            
-            raw_args = " ".join(context.args)
-            if not raw_args:
-                await update.message.reply_text("⚠️ Usage: `/addproject Title | Category | [Image URL]`")
-                return
+        async def add_project_title(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            if not is_admin(update.effective_chat.id):
+                return ConversationHandler.END
                 
-            parts = [p.strip() for p in raw_args.split("|")]
-            if len(parts) < 2:
-                await update.message.reply_text("⚠️ Error: Must provide at least Title and Category separated by a vertical bar (`|`).")
-                return
+            context.user_data['new_project_title'] = update.message.text
+            keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_flow")]]
+            await update.message.reply_text(
+                f"Title saved: **{update.message.text}**\n\nNow, enter the **Category** description (e.g. `Commercial • 85 Stories`, `Residential • Luxury`):",
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+            return ADD_PROJECT_CATEGORY
+
+        async def add_project_category(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            if not is_admin(update.effective_chat.id):
+                return ConversationHandler.END
                 
-            title = parts[0]
-            category = parts[1]
-            image_url = parts[2] if len(parts) > 2 and parts[2] else "https://lh3.googleusercontent.com/aida-public/AB6AXuBZSt8DyOiyuc3D0YvzOV9Jdv6p3zqa1c41iPnk0Ifax5pnO8pm20-EXQPJfcwJFQnfT2xPv9OtSS-3bPjpE9OcTYPJvwt7azVCzNeiI1xnESPKX9SOccKQbjZ4zNvjuWGnEFijdVqZLORetO7QXnzBxfJWm2Qyvyk0PMno0Fxb1XrWG_JkB4s8pAeN6Utx3R9zlEqhDLKQAbACyu9J_wQj6IIowCdT7nnSOfN5JJFswidCpbudUKNSDzlIpoxPTb5Eb3G_EKMGBvA"
-            
-            p_id = f"project-{int(asyncio.get_event_loop().time())}"
+            context.user_data['new_project_category'] = update.message.text
+            keyboard = [
+                [InlineKeyboardButton("🖼️ Skip & Use Default Image", callback_data="skip_project_image")],
+                [InlineKeyboardButton("❌ Cancel", callback_data="cancel_flow")]
+            ]
+            await update.message.reply_text(
+                f"Category saved: **{update.message.text}**\n\nFinally, send me the **Image URL** for the project, or click the button below to skip and use the default image:",
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+            return ADD_PROJECT_IMAGE
+
+        async def add_project_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            if not is_admin(update.effective_chat.id):
+                return ConversationHandler.END
+                
+            url = update.message.text.strip()
+            await save_project_and_finish(update, context, url)
+            return ConversationHandler.END
+
+        async def skip_project_image(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            query = update.callback_query
+            if not is_admin(query.message.chat.id):
+                await query.answer("⛔ Unauthorized.", show_alert=True)
+                return ConversationHandler.END
+                
+            await query.answer()
+            await save_project_and_finish(update, context, None)
+            return ConversationHandler.END
+
+        async def save_project_and_finish(update: Update, context: ContextTypes.DEFAULT_TYPE, image_url: Optional[str]):
+            title = context.user_data.get('new_project_title')
+            category = context.user_data.get('new_project_category')
+            if not image_url:
+                image_url = "https://lh3.googleusercontent.com/aida-public/AB6AXuBZSt8DyOiyuc3D0YvzOV9Jdv6p3zqa1c41iPnk0Ifax5pnO8pm20-EXQPJfcwJFQnfT2xPv9OtSS-3bPjpE9OcTYPJvwt7azVCzNeiI1xnESPKX9SOccKQbjZ4zNvjuWGnEFijdVqZLORetO7QXnzBxfJWm2Qyvyk0PMno0Fxb1XrWG_JkB4s8pAeN6Utx3R9zlEqhDLKQAbACyu9J_wQj6IIowCdT7nnSOfN5JJFswidCpbudUKNSDzlIpoxPTb5Eb3G_EKMGBvA"
+                
+            p_id = f"project-{uuid.uuid4().hex[:8]}"
             add_project(p_id, title, category, image_url, span="small")
-            await update.message.reply_text(f"✅ Project **{title}** added successfully under **{category}**!")
+            
+            text = (
+                f"✅ **Project Added Successfully!**\n\n"
+                f"• **Title**: {title}\n"
+                f"• **Category**: {category}\n"
+                f"• **Image**: `{image_url[:40]}...`"
+            )
+            
+            query = update.callback_query
+            if query:
+                await query.edit_message_text(text, parse_mode="Markdown")
+            else:
+                await update.message.reply_text(text, parse_mode="Markdown")
+                
+            await send_status_message_direct(context.bot)
 
-        # Command: /addjob Title | Department | Location | Type
-        async def addjob_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-            if str(update.effective_chat.id) != str(TELEGRAM_ADMIN_CHAT_ID):
-                return
+        # --- Job Creation Wizard Handler ---
+        async def start_job_flow(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            query = update.callback_query
+            chat_id = query.message.chat.id if query else update.effective_chat.id
+            if not is_admin(chat_id):
+                if query:
+                    await query.answer("⛔ Unauthorized.", show_alert=True)
+                return ConversationHandler.END
                 
-            raw_args = " ".join(context.args)
-            if not raw_args:
-                await update.message.reply_text("⚠️ Usage: `/addjob Title | Department | Location | Type`")
-                return
+            keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_flow")]]
+            if query:
+                await query.answer()
+                await query.edit_message_text(
+                    "💼 **Add Job Listing**\n\nPlease enter the **Job Title** (e.g. `Senior Architect`, `Safety Lead`):",
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
+            else:
+                await update.message.reply_text(
+                    "💼 **Add Job Listing**\n\nPlease enter the **Job Title** (e.g. `Senior Architect`, `Safety Lead`):",
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
                 
-            parts = [p.strip() for p in raw_args.split("|")]
-            if len(parts) < 4:
-                await update.message.reply_text("⚠️ Error: Must provide Title, Department, Location, and Type separated by `|`.")
-                return
+            return ADD_JOB_TITLE
+
+        async def add_job_title(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            if not is_admin(update.effective_chat.id):
+                return ConversationHandler.END
                 
-            title, dept, loc, j_type = parts[0], parts[1], parts[2], parts[3]
+            context.user_data['new_job_title'] = update.message.text
+            keyboard = [
+                [
+                    InlineKeyboardButton("Engineering", callback_data="dept_Engineering"),
+                    InlineKeyboardButton("Operations", callback_data="dept_Operations"),
+                ],
+                [
+                    InlineKeyboardButton("Design", callback_data="dept_Design"),
+                    InlineKeyboardButton("Safety", callback_data="dept_Safety"),
+                ],
+                [
+                    InlineKeyboardButton("Other", callback_data="dept_Other")
+                ],
+                [
+                    InlineKeyboardButton("❌ Cancel", callback_data="cancel_flow")
+                ]
+            ]
+            await update.message.reply_text(
+                f"Title saved: **{update.message.text}**\n\nSelect the **Department** for this job:",
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+            return ADD_JOB_DEPARTMENT
+
+        async def add_job_department(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            query = update.callback_query
+            if not is_admin(query.message.chat.id):
+                await query.answer("⛔ Unauthorized.", show_alert=True)
+                return ConversationHandler.END
+                
+            await query.answer()
+            dept = query.data.split("_")[1]
+            context.user_data['new_job_dept'] = dept
+            
+            keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_flow")]]
+            await query.edit_message_text(
+                f"Department selected: **{dept}**\n\nPlease enter the **Job Location** (e.g., `Noida, UP`, `Multiple Locations`):",
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+            return ADD_JOB_LOCATION
+
+        async def add_job_location(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            if not is_admin(update.effective_chat.id):
+                return ConversationHandler.END
+                
+            context.user_data['new_job_loc'] = update.message.text
+            keyboard = [
+                [
+                    InlineKeyboardButton("Full-time", callback_data="type_Full-time"),
+                    InlineKeyboardButton("Part-time", callback_data="type_Part-time"),
+                ],
+                [
+                    InlineKeyboardButton("Contract", callback_data="type_Contract"),
+                    InlineKeyboardButton("Internship", callback_data="type_Internship"),
+                ],
+                [
+                    InlineKeyboardButton("❌ Cancel", callback_data="cancel_flow")
+                ]
+            ]
+            await update.message.reply_text(
+                f"Location saved: **{update.message.text}**\n\nSelect the **Employment Type**:",
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+            return ADD_JOB_TYPE
+
+        async def add_job_type(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            query = update.callback_query
+            if not is_admin(query.message.chat.id):
+                await query.answer("⛔ Unauthorized.", show_alert=True)
+                return ConversationHandler.END
+                
+            await query.answer()
+            j_type = query.data.split("_")[1]
+            context.user_data['new_job_type'] = j_type
+            
+            title = context.user_data.get('new_job_title')
+            dept = context.user_data.get('new_job_dept')
+            loc = context.user_data.get('new_job_loc')
+            
             add_job(title, dept, loc, j_type)
-            await update.message.reply_text(f"✅ Job listing for **{title}** ({dept}) has been published!")
+            
+            text = (
+                f"✅ **Job Listing Published Successfully!**\n\n"
+                f"• **Title**: {title}\n"
+                f"• **Department**: {dept}\n"
+                f"• **Location**: {loc}\n"
+                f"• **Type**: {j_type}"
+            )
+            await query.edit_message_text(text, parse_mode="Markdown")
+            await send_status_message_direct(context.bot)
+            return ConversationHandler.END
 
-        # Command: /messages
-        async def messages_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-            if str(update.effective_chat.id) != str(TELEGRAM_ADMIN_CHAT_ID):
-                return
+        # --- Notice Banner Conversation Handler ---
+        async def start_notice_flow(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            query = update.callback_query
+            chat_id = query.message.chat.id if query else update.effective_chat.id
+            if not is_admin(chat_id):
+                if query:
+                    await query.answer("⛔ Unauthorized.", show_alert=True)
+                return ConversationHandler.END
                 
-            inquiries = get_all_messages()
-            if not inquiries:
-                await update.message.reply_text("📬 No pending inquiries in the database.")
-                return
-                
-            latest = inquiries[:5]
-            reply = "📬 **Latest 5 Contact Inquiries:**\n\n"
-            for i, m in enumerate(latest):
-                reply += f"🔹 **#{m['id']} - {m['name']}** ({m['date']})\n"
-                reply += f"📧 `{m['email']}`\n"
-                reply += f"💬 *{m['message']}*\n\n"
-                
-            if len(inquiries) > 5:
-                reply += f"_(And {len(inquiries) - 5} more inquiries in database)_"
-                
-            await update.message.reply_text(reply, parse_mode="Markdown")
+            keyboard = [
+                [InlineKeyboardButton("🗑️ Clear Notice Banner", callback_data="clear_notice_exec")],
+                [InlineKeyboardButton("❌ Cancel", callback_data="cancel_flow")]
+            ]
+            if query:
+                await query.answer()
+                await query.edit_message_text(
+                    "📝 **Change Notice Banner**\n\nPlease enter the new notice banner text (or click Clear to remove it):",
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
+            else:
+                await update.message.reply_text(
+                    "📝 **Change Notice Banner**\n\nPlease enter the new notice banner text (or type /cancel):",
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
+            return SET_NOTICE_TEXT
 
-        # Command: /clearmessages
-        async def clearmessages_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-            if str(update.effective_chat.id) != str(TELEGRAM_ADMIN_CHAT_ID):
-                return
+        async def set_notice_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            if not is_admin(update.effective_chat.id):
+                return ConversationHandler.END
                 
-            clear_messages()
-            await update.message.reply_text("✅ All contact inquiries cleared from the database.")
+            txt = update.message.text.strip()
+            update_setting("siteNotice", txt)
+            await update.message.reply_text(f"✅ Notice banner set to:\n\"{txt}\"")
+            await send_status_message_direct(context.bot)
+            return ConversationHandler.END
+
+        async def clear_notice_exec(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            query = update.callback_query
+            if not is_admin(query.message.chat.id):
+                await query.answer("⛔ Unauthorized.", show_alert=True)
+                return ConversationHandler.END
+                
+            await query.answer()
+            update_setting("siteNotice", "")
+            await query.edit_message_text("✅ Notice banner cleared.")
+            await send_status_message_direct(context.bot)
+            return ConversationHandler.END
+
+        # Cancellation Handlers
+        async def cancel_flow(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            await update.message.reply_text("❌ Action cancelled.")
+            await send_status_message_direct(context.bot)
+            return ConversationHandler.END
+
+        async def cancel_flow_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            query = update.callback_query
+            await query.answer()
+            await query.edit_message_text("❌ Action cancelled.")
+            await send_status_message_direct(context.bot)
+            return ConversationHandler.END
 
     except ImportError:
         print("python-telegram-bot package is not loaded yet.")
@@ -203,15 +505,71 @@ async def lifespan(app: FastAPI):
         try:
             bot_app = ApplicationBuilder().token(TELEGRAM_BOT_TOKEN).build()
             
-            # Add command handlers
+            # Register Project Wizard Conversation
+            project_conv = ConversationHandler(
+                entry_points=[
+                    CallbackQueryHandler(start_project_flow, pattern="^start_project_flow$"),
+                    CommandHandler("addproject", start_project_flow)
+                ],
+                states={
+                    ADD_PROJECT_TITLE: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_project_title)],
+                    ADD_PROJECT_CATEGORY: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_project_category)],
+                    ADD_PROJECT_IMAGE: [
+                        MessageHandler(filters.TEXT & ~filters.COMMAND, add_project_image),
+                        CallbackQueryHandler(skip_project_image, pattern="^skip_project_image$")
+                    ],
+                },
+                fallbacks=[
+                    CommandHandler("cancel", cancel_flow),
+                    CallbackQueryHandler(cancel_flow_cb, pattern="^cancel_flow$")
+                ],
+            )
+            bot_app.add_handler(project_conv)
+
+            # Register Job Wizard Conversation
+            job_conv = ConversationHandler(
+                entry_points=[
+                    CallbackQueryHandler(start_job_flow, pattern="^start_job_flow$"),
+                    CommandHandler("addjob", start_job_flow)
+                ],
+                states={
+                    ADD_JOB_TITLE: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_job_title)],
+                    ADD_JOB_DEPARTMENT: [CallbackQueryHandler(add_job_department, pattern="^dept_")],
+                    ADD_JOB_LOCATION: [MessageHandler(filters.TEXT & ~filters.COMMAND, add_job_location)],
+                    ADD_JOB_TYPE: [CallbackQueryHandler(add_job_type, pattern="^type_")],
+                },
+                fallbacks=[
+                    CommandHandler("cancel", cancel_flow),
+                    CallbackQueryHandler(cancel_flow_cb, pattern="^cancel_flow$")
+                ],
+            )
+            bot_app.add_handler(job_conv)
+
+            # Register Notice Banner Conversation
+            notice_conv = ConversationHandler(
+                entry_points=[
+                    CallbackQueryHandler(start_notice_flow, pattern="^start_notice_flow$"),
+                    CommandHandler("notice", start_notice_flow)
+                ],
+                states={
+                    SET_NOTICE_TEXT: [
+                        MessageHandler(filters.TEXT & ~filters.COMMAND, set_notice_text),
+                        CallbackQueryHandler(clear_notice_exec, pattern="^clear_notice_exec$")
+                    ],
+                },
+                fallbacks=[
+                    CommandHandler("cancel", cancel_flow),
+                    CallbackQueryHandler(cancel_flow_cb, pattern="^cancel_flow$")
+                ],
+            )
+            bot_app.add_handler(notice_conv)
+
+            # Register Command Handlers
             bot_app.add_handler(CommandHandler("start", start_command))
             bot_app.add_handler(CommandHandler("status", status_command))
-            bot_app.add_handler(CommandHandler("maintenance", maintenance_command))
-            bot_app.add_handler(CommandHandler("notice", notice_command))
-            bot_app.add_handler(CommandHandler("addproject", addproject_command))
-            bot_app.add_handler(CommandHandler("addjob", addjob_command))
-            bot_app.add_handler(CommandHandler("messages", messages_command))
-            bot_app.add_handler(CommandHandler("clearmessages", clearmessages_command))
+
+            # Register Static Button Callback Handler
+            bot_app.add_handler(CallbackQueryHandler(button_callback_handler))
             
             await bot_app.initialize()
             await bot_app.updater.start_polling()

@@ -32,11 +32,21 @@ export default function AiAssistant() {
     setInput('')
     setIsLoading(true)
 
+    const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY
+    if (!apiKey) {
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: '⚠️ API Error: OpenRouter API Key is missing. Please ensure VITE_OPENROUTER_API_KEY is defined in site/.env.local (or your deployment environment variables) and restart your Vite development server.' 
+      }])
+      setIsLoading(false)
+      return
+    }
+
     try {
       const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
+          'Authorization': `Bearer ${apiKey}`,
           'HTTP-Referer': window.location.href, // Required for OpenRouter
           'X-Title': 'Vertical Constructions', // Required for OpenRouter
           'Content-Type': 'application/json'

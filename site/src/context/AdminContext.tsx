@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { Project, Job, FleetItem, Vendor, SafetyLog, Settings, Message, AdminContextType } from '../types'
 
 const AdminContext = createContext<AdminContextType | undefined>(undefined)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api'
 
 const INITIAL_PROJECTS: Project[] = [
   {
@@ -108,6 +109,7 @@ export function AdminProvider({ children }: { children: ReactNode }) {
     return saved ? JSON.parse(saved) : INITIAL_SETTINGS
   })
 
+  // Local storage synchronization (Fallback/offline caching)
   useEffect(() => { localStorage.setItem('vc_projects', JSON.stringify(projects)) }, [projects])
   useEffect(() => { localStorage.setItem('vc_jobs', JSON.stringify(jobs)) }, [jobs])
   useEffect(() => { localStorage.setItem('vc_messages', JSON.stringify(messages)) }, [messages])
@@ -116,14 +118,148 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   useEffect(() => { localStorage.setItem('vc_safety', JSON.stringify(safetyLogs)) }, [safetyLogs])
   useEffect(() => { localStorage.setItem('vc_settings', JSON.stringify(settings)) }, [settings])
 
-  const addProject = (project: Omit<Project, 'id'>) => setProjects(prev => [...prev, { ...project, id: Date.now().toString() }])
-  const deleteProject = (id: string) => setProjects(prev => prev.filter(p => p.id !== id))
+  // Revalidate states dynamically from FastAPI backend on load
+  useEffect(() => {
+    const syncData = async () => {
+      try {
+        const res = await fetch(`${API_URL}/projects`)
+        if (res.ok) setProjects(await res.json())
+      } catch (e) {
+        console.warn("Backend offline. Using localStorage for projects.")
+      }
 
-  const addJob = (job: Omit<Job, 'id'>) => setJobs(prev => [...prev, { ...job, id: Date.now() }])
-  const deleteJob = (id: number) => setJobs(prev => prev.filter(j => j.id !== id))
+      try {
+        const res = await fetch(`${API_URL}/jobs`)
+        if (res.ok) setJobs(await res.json())
+      } catch (e) {
+        console.warn("Backend offline. Using localStorage for jobs.")
+      }
 
-  const addMessage = (message: Omit<Message, 'id' | 'date'>) => setMessages(prev => [{ ...message, id: Date.now(), date: new Date().toISOString() }, ...prev])
-  const deleteMessage = (id: number) => setMessages(prev => prev.filter(m => m.id !== id))
+      try {
+        const res = await fetch(`${API_URL}/messages`)
+        if (res.ok) setMessages(await res.json())
+      } catch (e) {
+        console.warn("Backend offline. Using localStorage for messages.")
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/settings`)
+        if (res.ok) setSettings(await res.json())
+      } catch (e) {
+        console.warn("Backend offline. Using localStorage for settings.")
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/fleet`)
+        if (res.ok) setFleet(await res.json())
+      } catch (e) {
+        console.warn("Backend offline. Using localStorage for fleet.")
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/vendors`)
+        if (res.ok) setVendors(await res.json())
+      } catch (e) {
+        console.warn("Backend offline. Using localStorage for vendors.")
+      }
+
+      try {
+        const res = await fetch(`${API_URL}/safety`)
+        if (res.ok) setSafetyLogs(await res.json())
+      } catch (e) {
+        console.warn("Backend offline. Using localStorage for safety logs.")
+      }
+    }
+    syncData()
+  }, [])
+
+  // CRUD actions updating local state + backend API
+  const addProject = async (project: Omit<Project, 'id'>) => {
+    const tempId = `project-${Date.now()}`
+    const newProject = { ...project, id: tempId }
+    setProjects(prev => [...prev, newProject])
+
+    try {
+      const res = await fetch(`${API_URL}/projects`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newProject)
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setProjects(prev => prev.map(p => p.id === tempId ? { ...p, id: data.id } : p))
+      }
+    } catch (e) {
+      console.error("Failed to post project to backend API:", e)
+    }
+  }
+
+  const deleteProject = async (id: string) => {
+    setProjects(prev => prev.filter(p => p.id !== id))
+    try {
+      await fetch(`${API_URL}/projects/${id}`, { method: 'DELETE' })
+    } catch (e) {
+      console.error("Failed to delete project on backend API:", e)
+    }
+  }
+
+  const addJob = async (job: Omit<Job, 'id'>) => {
+    const tempId = Date.now()
+    const newJob = { ...job, id: tempId }
+    setJobs(prev => [...prev, newJob])
+
+    try {
+      const res = await fetch(`${API_URL}/jobs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(job)
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setJobs(prev => prev.map(j => j.id === tempId ? { ...j, id: data.id } : j))
+      }
+    } catch (e) {
+      console.error("Failed to post job to backend API:", e)
+    }
+  }
+
+  const deleteJob = async (id: number) => {
+    setJobs(prev => prev.filter(j => j.id !== id))
+    try {
+      await fetch(`${API_URL}/jobs/${id}`, { method: 'DELETE' })
+    } catch (e) {
+      console.error("Failed to delete job on backend API:", e)
+    }
+  }
+
+  const addMessage = async (message: Omit<Message, 'id' | 'date'>) => {
+    const tempId = Date.now()
+    const newMsg = { ...message, id: tempId, date: new Date().toISOString() }
+    setMessages(prev => [newMsg, ...prev])
+
+    try {
+      const res = await fetch(`${API_URL}/messages`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(message)
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setMessages(prev => prev.map(m => m.id === tempId ? { ...m, id: data.id } : m))
+      }
+    } catch (e) {
+      console.error("Failed to submit message to backend API:", e)
+    }
+  }
+
+  const deleteMessage = async (id: number) => {
+    setMessages(prev => prev.filter(m => m.id !== id))
+    try {
+      await fetch(`${API_URL}/messages/${id}`, { method: 'DELETE' })
+    } catch (e) {
+      console.error("Failed to delete message on backend API:", e)
+    }
+  }
 
   const addFleet = (item: Omit<FleetItem, 'id'>) => setFleet(prev => [...prev, { ...item, id: Date.now().toString() }])
   const deleteFleet = (id: string) => setFleet(prev => prev.filter(f => f.id !== id))
@@ -134,7 +270,18 @@ export function AdminProvider({ children }: { children: ReactNode }) {
   const addSafetyLog = (log: Omit<SafetyLog, 'id' | 'date'>) => setSafetyLogs(prev => [{ ...log, id: Date.now().toString(), date: new Date().toLocaleDateString() }, ...prev])
   const deleteSafetyLog = (id: string) => setSafetyLogs(prev => prev.filter(s => s.id !== id))
 
-  const updateSetting = (key: keyof Settings, value: boolean | string) => setSettings(prev => ({ ...prev, [key]: value }))
+  const updateSetting = async (key: keyof Settings, value: boolean | string) => {
+    setSettings(prev => ({ ...prev, [key]: value }))
+    try {
+      await fetch(`${API_URL}/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, value })
+      })
+    } catch (e) {
+      console.error("Failed to update setting on backend API:", e)
+    }
+  }
 
   return (
     <AdminContext.Provider value={{
