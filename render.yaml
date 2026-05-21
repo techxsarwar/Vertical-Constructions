@@ -1,0 +1,36 @@
+services:
+  # FastAPI Python Backend
+  - type: web
+    name: vertical-constructions-backend
+    env: python
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false # Set this in the Render dashboard env settings
+      - key: TELEGRAM_ADMIN_CHAT_ID
+        sync: false # Set this in the Render dashboard env settings
+    disk:
+      name: sqlite-data
+      mountPath: /data
+      sizeGB: 1
+
+  # Vite Frontend Static Site
+  - type: web
+    name: vertical-constructions-frontend
+    env: static
+    rootDir: site
+    buildCommand: npm install && npm run build
+    publishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: VITE_OPENROUTER_API_KEY
+        sync: false # Set this in the Render dashboard env settings
+      - key: VITE_API_URL
+        sync: false # Set this in the Render dashboard env settings (e.g. https://vertical-constructions-backend.onrender.com/api)
