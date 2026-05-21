@@ -14,7 +14,7 @@ import io
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
-import google.generativeai as genai
+from openai import AsyncOpenAI
 
 class SubscribeRequest(BaseModel):
     email: str
@@ -36,10 +36,15 @@ load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_ADMIN_CHAT_ID = os.getenv("TELEGRAM_ADMIN_CHAT_ID")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY") or os.getenv("OPENAI_API_KEY")
 
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
+if OPENROUTER_API_KEY:
+    ai_client = AsyncOpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=OPENROUTER_API_KEY
+    )
+else:
+    ai_client = None
 
 # --- Telegram Bot Commands & Lifecycle ---
 bot_running = False
@@ -802,8 +807,8 @@ if TELEGRAM_BOT_TOKEN and TELEGRAM_ADMIN_CHAT_ID:
         # --- AI Assistant ---
         async def ai_assistant_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if not is_admin(update.effective_chat.id): return
-            if not GEMINI_API_KEY:
-                await update.message.reply_text("❌ Gemini API Key not set.")
+            if not ai_client:
+                await update.message.reply_text("❌ OpenRouter API Key not set.")
                 return
                 
             user_msg = update.message.text.strip()
@@ -815,9 +820,14 @@ if TELEGRAM_BOT_TOKEN and TELEGRAM_ADMIN_CHAT_ID:
                 msgs = get_all_messages()
                 context_str = f"Projects: {len(projects)}, Jobs: {len(jobs)}, Recent Inquiries: {len(msgs)}."
                 
-                model = genai.GenerativeModel("gemini-1.5-flash")
-                response = model.generate_content(f"You are the AI assistant for Vertical Constructions. Context: {context_str}. User says: {user_msg}")
-                await msg.edit_text(response.text)
+                response = await ai_client.chat.completions.create(
+                    model="openai/gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": f"You are the AI assistant for Vertical Constructions. Context: {context_str}."},
+                        {"role": "user", "content": user_msg}
+                    ]
+                )
+                await msg.edit_text(response.choices[0].message.content)
             except Exception as e:
                 await msg.edit_text(f"❌ AI Error: {e}")
 

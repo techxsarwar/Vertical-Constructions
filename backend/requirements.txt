@@ -3,5 +3,5 @@ uvicorn
 pydantic
 python-dotenv
 python-telegram-bot
-google-generativeai
+openai
 matplotlib
