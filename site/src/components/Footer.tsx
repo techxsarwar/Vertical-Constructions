@@ -1,7 +1,8 @@
-import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAdmin } from '../context/AdminContext'
 import './Footer.css'
+
+const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace('/api', '')
 
 export default function Footer() {
   const { settings } = useAdmin()
@@ -72,7 +73,7 @@ export default function Footer() {
               const formData = new FormData(e.currentTarget);
               const email = formData.get('email');
               if (email) {
-                fetch('http://localhost:8000/api/subscribe', {
+                fetch(`${API_BASE}/api/subscribe`, {
                   method: 'POST',
                   headers: {'Content-Type': 'application/json'},
                   body: JSON.stringify({email})

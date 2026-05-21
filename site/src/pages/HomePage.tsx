@@ -109,7 +109,7 @@ export default function HomePage() {
   const [activeTestimonial, setActiveTestimonial] = useState(0)
   const [heroLoaded, setHeroLoaded] = useState(false)
   const [activeProcess, setActiveProcess] = useState(0)
-  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+  const apiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace('/api', '')
 
   useEffect(() => {
     fetch(`${apiUrl}/api/testimonials`)

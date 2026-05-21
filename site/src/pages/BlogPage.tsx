@@ -7,7 +7,7 @@ export default function BlogPage() {
 
   useEffect(() => {
     // Determine the API URL dynamically based on environment
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const apiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace('/api', '');
     fetch(`${apiUrl}/api/blogs`)
       .then(res => res.json())
       .then(data => setBlogs(data))

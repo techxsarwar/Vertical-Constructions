@@ -9,7 +9,7 @@ export default function BlogPostPage() {
   const [blog, setBlog] = useState<any>(null);
 
   useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    const apiUrl = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace('/api', '');
     fetch(`${apiUrl}/api/blogs/${slug}`)
       .then(res => res.json())
       .then(data => setBlog(data))
