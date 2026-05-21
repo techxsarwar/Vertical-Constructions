@@ -26,6 +26,23 @@ function ScrollToTop() {
 function AppContent() {
   const { settings } = useAdmin()
 
+  useEffect(() => {
+    if (settings.metaTitle) {
+      document.title = settings.metaTitle;
+    }
+    if (settings.metaDescription) {
+      let metaDesc = document.querySelector('meta[name="description"]');
+      if (metaDesc) {
+        metaDesc.setAttribute('content', settings.metaDescription);
+      } else {
+        metaDesc = document.createElement('meta');
+        metaDesc.setAttribute('name', 'description');
+        metaDesc.setAttribute('content', settings.metaDescription);
+        document.head.appendChild(metaDesc);
+      }
+    }
+  }, [settings.metaTitle, settings.metaDescription])
+
   if (settings.maintenanceMode) {
     return (
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', background: 'var(--surface-container-lowest)', color: 'var(--base-white)', textAlign: 'center' }}>

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react'
+import { useAdmin } from '../context/AdminContext'
 import './LegalPage.css'
 
 function useIntersection(ref: React.RefObject<HTMLElement | null>) {
@@ -22,6 +23,7 @@ function useIntersection(ref: React.RefObject<HTMLElement | null>) {
 export default function TermsPage() {
   const ref = useRef<HTMLDivElement>(null)
   useIntersection(ref)
+  const { settings } = useAdmin()
 
   return (
     <div className="legal-page" id="terms-page">
@@ -35,6 +37,19 @@ export default function TermsPage() {
       <div className="container">
         <div ref={ref} className="legal-content animated-section">
           <div className="legal-content__main">
+            {settings.termsConditionsText ? (
+              settings.termsConditionsText.split('\n\n').map((paragraph: string, index: number) => (
+                <p key={index} className="body-md" style={{ marginBottom: '1.5rem' }}>
+                  {paragraph.split('\n').map((line, i) => (
+                    <React.Fragment key={i}>
+                      {line}
+                      {i !== paragraph.split('\n').length - 1 && <br />}
+                    </React.Fragment>
+                  ))}
+                </p>
+              ))
+            ) : (
+              <>
             <h2 className="headline-lg">1. Agreement to Terms</h2>
             <p className="body-md">
               These Terms and Conditions constitute a legally binding agreement made between you and Vertical Constructions concerning your access to and use of the verticalconstructions.in website as well as any other media form related, linked, or otherwise connected thereto.
@@ -59,6 +74,8 @@ export default function TermsPage() {
             <p className="body-md">
               In no event will we or our directors, employees, or agents be liable to you or any third party for any direct, indirect, consequential, exemplary, incidental, special, or punitive damages arising from your use of the site.
             </p>
+            </>
+            )}
           </div>
           
           <aside className="legal-sidebar">

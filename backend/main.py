@@ -40,8 +40,12 @@ bot_running = False
     ADD_JOB_TYPE,
     SET_NOTICE_TEXT,
     SET_CONTACT_PHONE,
-    SET_CONTACT_EMAIL
-) = range(10)
+    SET_CONTACT_EMAIL,
+    SET_PRIVACY,
+    SET_TERMS,
+    SET_META_TITLE,
+    SET_META_DESC
+) = range(14)
 
 def is_admin(chat_id: int) -> bool:
     return str(chat_id) == str(TELEGRAM_ADMIN_CHAT_ID)
@@ -90,6 +94,14 @@ if TELEGRAM_BOT_TOKEN and TELEGRAM_ADMIN_CHAT_ID:
                 [
                     InlineKeyboardButton("📬 View Inquiries", callback_data="view_messages"),
                     InlineKeyboardButton("🗑️ Clear Inquiries", callback_data="confirm_clear_messages"),
+                ],
+                [
+                    InlineKeyboardButton("✍️ Edit Privacy", callback_data="start_privacy_flow"),
+                    InlineKeyboardButton("✍️ Edit Terms", callback_data="start_terms_flow"),
+                ],
+                [
+                    InlineKeyboardButton("🌐 Edit Meta Title", callback_data="start_meta_title_flow"),
+                    InlineKeyboardButton("🌐 Edit Meta Desc", callback_data="start_meta_desc_flow"),
                 ],
                 [
                     InlineKeyboardButton("🔄 Refresh Dashboard", callback_data="refresh_status"),
@@ -569,6 +581,95 @@ if TELEGRAM_BOT_TOKEN and TELEGRAM_ADMIN_CHAT_ID:
             await send_status_message_direct(context.bot)
             return ConversationHandler.END
 
+        # --- Content & Meta Handlers ---
+        async def start_privacy_flow(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            query = update.callback_query
+            chat_id = query.message.chat.id if query else update.effective_chat.id
+            if not is_admin(chat_id):
+                if query: await query.answer("⛔ Unauthorized.", show_alert=True)
+                return ConversationHandler.END
+            keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_flow")]]
+            text = "✍️ **Update Privacy Policy**\n\nEnter the new Privacy Policy text. Use double newlines to separate paragraphs:"
+            if query:
+                await query.answer()
+                await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+            else:
+                await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+            return SET_PRIVACY
+
+        async def set_privacy_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            if not is_admin(update.effective_chat.id): return ConversationHandler.END
+            update_setting("privacyPolicyText", update.message.text.strip())
+            await update.message.reply_text("✅ Privacy Policy updated.")
+            await send_status_message_direct(context.bot)
+            return ConversationHandler.END
+
+        async def start_terms_flow(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            query = update.callback_query
+            chat_id = query.message.chat.id if query else update.effective_chat.id
+            if not is_admin(chat_id):
+                if query: await query.answer("⛔ Unauthorized.", show_alert=True)
+                return ConversationHandler.END
+            keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_flow")]]
+            text = "✍️ **Update Terms & Conditions**\n\nEnter the new Terms text. Use double newlines to separate paragraphs:"
+            if query:
+                await query.answer()
+                await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+            else:
+                await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+            return SET_TERMS
+
+        async def set_terms_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            if not is_admin(update.effective_chat.id): return ConversationHandler.END
+            update_setting("termsConditionsText", update.message.text.strip())
+            await update.message.reply_text("✅ Terms & Conditions updated.")
+            await send_status_message_direct(context.bot)
+            return ConversationHandler.END
+
+        async def start_meta_title_flow(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            query = update.callback_query
+            chat_id = query.message.chat.id if query else update.effective_chat.id
+            if not is_admin(chat_id):
+                if query: await query.answer("⛔ Unauthorized.", show_alert=True)
+                return ConversationHandler.END
+            keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_flow")]]
+            text = "🌐 **Update Meta Title**\n\nEnter the new meta title for the website:"
+            if query:
+                await query.answer()
+                await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+            else:
+                await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+            return SET_META_TITLE
+
+        async def set_meta_title(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            if not is_admin(update.effective_chat.id): return ConversationHandler.END
+            update_setting("metaTitle", update.message.text.strip())
+            await update.message.reply_text("✅ Meta Title updated.")
+            await send_status_message_direct(context.bot)
+            return ConversationHandler.END
+
+        async def start_meta_desc_flow(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            query = update.callback_query
+            chat_id = query.message.chat.id if query else update.effective_chat.id
+            if not is_admin(chat_id):
+                if query: await query.answer("⛔ Unauthorized.", show_alert=True)
+                return ConversationHandler.END
+            keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_flow")]]
+            text = "🌐 **Update Meta Description**\n\nEnter the new meta description for the website:"
+            if query:
+                await query.answer()
+                await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+            else:
+                await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+            return SET_META_DESC
+
+        async def set_meta_desc(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            if not is_admin(update.effective_chat.id): return ConversationHandler.END
+            update_setting("metaDescription", update.message.text.strip())
+            await update.message.reply_text("✅ Meta Description updated.")
+            await send_status_message_direct(context.bot)
+            return ConversationHandler.END
+
         # Cancellation Handlers
         async def cancel_flow(update: Update, context: ContextTypes.DEFAULT_TYPE):
             await update.message.reply_text("❌ Action cancelled.")
@@ -681,6 +782,35 @@ async def lifespan(app: FastAPI):
                 ],
             )
             bot_app.add_handler(email_conv)
+
+            # Register Content & Meta Handlers
+            privacy_conv = ConversationHandler(
+                entry_points=[CallbackQueryHandler(start_privacy_flow, pattern="^start_privacy_flow$")],
+                states={SET_PRIVACY: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_privacy_text)]},
+                fallbacks=[CommandHandler("cancel", cancel_flow), CallbackQueryHandler(cancel_flow_cb, pattern="^cancel_flow$")],
+            )
+            bot_app.add_handler(privacy_conv)
+
+            terms_conv = ConversationHandler(
+                entry_points=[CallbackQueryHandler(start_terms_flow, pattern="^start_terms_flow$")],
+                states={SET_TERMS: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_terms_text)]},
+                fallbacks=[CommandHandler("cancel", cancel_flow), CallbackQueryHandler(cancel_flow_cb, pattern="^cancel_flow$")],
+            )
+            bot_app.add_handler(terms_conv)
+
+            meta_title_conv = ConversationHandler(
+                entry_points=[CallbackQueryHandler(start_meta_title_flow, pattern="^start_meta_title_flow$")],
+                states={SET_META_TITLE: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_meta_title)]},
+                fallbacks=[CommandHandler("cancel", cancel_flow), CallbackQueryHandler(cancel_flow_cb, pattern="^cancel_flow$")],
+            )
+            bot_app.add_handler(meta_title_conv)
+
+            meta_desc_conv = ConversationHandler(
+                entry_points=[CallbackQueryHandler(start_meta_desc_flow, pattern="^start_meta_desc_flow$")],
+                states={SET_META_DESC: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_meta_desc)]},
+                fallbacks=[CommandHandler("cancel", cancel_flow), CallbackQueryHandler(cancel_flow_cb, pattern="^cancel_flow$")],
+            )
+            bot_app.add_handler(meta_desc_conv)
 
             # Register Command Handlers
             bot_app.add_handler(CommandHandler("start", start_command))

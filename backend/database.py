@@ -96,7 +96,11 @@ def init_db():
             "maintenanceMode": "false",
             "contactPhone": "+91 98765 43210",
             "contactEmail": "projects@verticalconstructions.in",
-            "siteNotice": ""
+            "siteNotice": "",
+            "metaTitle": "Vertical Constructions — Engineered for Excellence",
+            "metaDescription": "Vertical Constructions — High-contrast engineering meets luxury architecture. We build the future vertically with precision, sustainability, and structural vibrancy.",
+            "privacyPolicyText": "",
+            "termsConditionsText": ""
         }
         for k, v in initial_settings.items():
             cursor.execute("INSERT INTO settings (key, value) VALUES (?, ?)", (k, v))
@@ -300,7 +304,18 @@ def get_all_settings():
     settings = conn.execute("SELECT * FROM settings").fetchall()
     conn.close()
     
-    settings_dict = {}
+    # Default fallbacks
+    settings_dict = {
+        "maintenanceMode": False,
+        "contactPhone": "+91 98765 43210",
+        "contactEmail": "projects@verticalconstructions.in",
+        "siteNotice": "",
+        "metaTitle": "Vertical Constructions — Engineered for Excellence",
+        "metaDescription": "Vertical Constructions — High-contrast engineering meets luxury architecture. We build the future vertically with precision, sustainability, and structural vibrancy.",
+        "privacyPolicyText": "",
+        "termsConditionsText": ""
+    }
+    
     for row in settings:
         key = row["key"]
         val = row["value"]

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react'
+import { useAdmin } from '../context/AdminContext'
 import './LegalPage.css'
 
 function useIntersection(ref: React.RefObject<HTMLElement | null>) {
@@ -22,6 +23,7 @@ function useIntersection(ref: React.RefObject<HTMLElement | null>) {
 export default function PrivacyPage() {
   const ref = useRef<HTMLDivElement>(null)
   useIntersection(ref)
+  const { settings } = useAdmin()
 
   return (
     <div className="legal-page" id="privacy-page">
@@ -35,6 +37,19 @@ export default function PrivacyPage() {
       <div className="container">
         <div ref={ref} className="legal-content animated-section">
           <div className="legal-content__main">
+            {settings.privacyPolicyText ? (
+              settings.privacyPolicyText.split('\n\n').map((paragraph: string, index: number) => (
+                <p key={index} className="body-md" style={{ marginBottom: '1.5rem' }}>
+                  {paragraph.split('\n').map((line, i) => (
+                    <React.Fragment key={i}>
+                      {line}
+                      {i !== paragraph.split('\n').length - 1 && <br />}
+                    </React.Fragment>
+                  ))}
+                </p>
+              ))
+            ) : (
+              <>
             <h2 className="headline-lg">1. Information We Collect</h2>
             <p className="body-md">
               At Vertical Constructions, we are committed to protecting your privacy. We collect information that you provide directly to us when requesting a quote, applying for a position, or contacting our support team. This may include your name, email address, phone number, and project details.
@@ -64,6 +79,8 @@ export default function PrivacyPage() {
             <p className="body-md">
               If you have any questions about this Privacy Policy, please contact our compliance team at privacy@verticalconstructions.in.
             </p>
+            </>
+            )}
           </div>
           
           <aside className="legal-sidebar">
