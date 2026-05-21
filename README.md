@@ -1,16 +1,14 @@
 <div align="center">
-  <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExNTl0Nmxmb2R5YnYwZXIzMjEzNmJkMzZkZTE1MmJ1MTJwaW9peTRneSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/L1R1tvI9svkIWwpVYr/giphy.gif" alt="Construction GIF" width="300" />
-
   <h1 align="center">🏗️ Vertical Constructions</h1>
-
   <p align="center">
-    <strong>Where High-Contrast Engineering Meets Luxury Architecture</strong>
+    <strong>A Premium Construction Firm Management Dashboard & Website</strong>
     <br />
-    Building the future vertically with precision, sustainability, and structural vibrancy.
+    Developed by <a href="https://github.com/techxsarwar">@techxsarwar</a>
   </p>
 
   <p align="center">
     <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React" />
+    <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white" alt="Vite" />
     <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
     <img src="https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI" />
     <img src="https://img.shields.io/badge/SQLite-07405E?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite" />
@@ -20,73 +18,92 @@
 
 ---
 
-## ✨ Features
+## 📖 About the Project
 
-<table align="center">
-  <tr>
-    <td align="center" width="50%">
-      <img src="https://media.giphy.com/media/Jso4R23Oqf0hR1V5Hh/giphy.gif" alt="UI GIF" width="300" />
-      <br />
-      <strong>🏢 Modern Frontend Site</strong>
-      <p>A dynamic, mobile-responsive React application showcasing live projects, fleet metrics, and jobs with a premium construction aesthetic.</p>
-    </td>
-    <td align="center" width="50%">
-      <img src="https://media.giphy.com/media/2Faz2ZpC28K46z4cw/giphy.gif" alt="Bot GIF" width="300" />
-      <br />
-      <strong>🤖 Telegram Bot CMS</strong>
-      <p>Manage the entire platform straight from Telegram! Instantly update metadata, privacy policies, contact information, and receive live notifications for new inquiries.</p>
-    </td>
-  </tr>
-</table>
+**Vertical Constructions** is a comprehensive full-stack solution built for a modern construction firm. It bridges a sleek, high-conversion frontend website with a powerful, fast, and completely remote backend managed via a Telegram bot.
 
-### ⚙️ Backend (FastAPI + SQLite)
-- **Centralized Data**: A lightweight, fast API built with FastAPI that manages the SQLite database.
-- **Data Entities**: Keeps track of Projects, Job Listings, Contact Messages, Fleet Status, Vendors, and Safety Logs.
-- **Live Settings**: Allows for toggling a maintenance mode or a notice banner across the site in real-time.
+### What does it do?
+- **Public Facing Website**: Displays ongoing projects, job openings, and services. Allows clients to reach out via a contact form.
+- **Content Management via Telegram**: As an admin, you don't even need a web dashboard. You manage the entire site's content (jobs, projects, meta-tags, legal pages, fleet statuses, vendors) directly from your Telegram app.
+- **Real-Time Database**: A lightweight FastAPI + SQLite backend ensures lightning-fast load times.
 
 ---
 
-## 🚀 Getting Started
+## 🛠️ The Tech Stack
+
+### Frontend (`/site`)
+- **React.js** (Vite)
+- **TypeScript** for type safety
+- **Tailwind CSS** for responsive, luxury-themed styling
+
+### Backend (`/backend`)
+- **FastAPI** (Python) for rapid API development
+- **SQLite3** for lightweight, portable data storage
+- **python-telegram-bot** for building the admin control panel
+
+---
+
+## 🚀 How to Run Locally
 
 ### Prerequisites
-- Node.js (v18+)
-- Python (3.9+)
+Make sure you have the following installed on your machine:
+- [Node.js](https://nodejs.org/en/) (v18+)
+- [Python](https://www.python.org/downloads/) (3.9+)
+- [Git](https://git-scm.com/)
 
-### 1️⃣ Setup the Backend
-<details>
-<summary>Click to expand Backend Instructions</summary>
+### 1️⃣ Setting up the Backend
 
-```bash
-# Navigate to the backend directory
-cd backend
+1. Clone the repository and navigate to the backend:
+   ```bash
+   git clone https://github.com/techxsarwar/Vertical-Constructions.git
+   cd Vertical-Constructions/backend
+   ```
+2. Install the required Python dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Set up your environment variables. Create a `.env` file in the `backend` folder and add your Telegram bot credentials:
+   ```env
+   TELEGRAM_BOT_TOKEN=your_bot_token_here
+   TELEGRAM_ADMIN_CHAT_ID=your_chat_id_here
+   ```
+4. Start the backend server:
+   ```bash
+   python main.py
+   ```
+   *The server will start on `http://localhost:8000` and the SQLite database will initialize automatically.*
 
-# Install dependencies
-pip install -r requirements.txt
+### 2️⃣ Setting up the Frontend
 
-# Start the server (runs on port 8000)
-python main.py
-```
-*Note: Make sure to set up your `.env` file with `TELEGRAM_BOT_TOKEN` and `TELEGRAM_ADMIN_CHAT_ID`!*
-</details>
-
-### 2️⃣ Setup the Frontend Site
-<details>
-<summary>Click to expand Frontend Instructions</summary>
-
-```bash
-# Navigate to the site directory
-cd site
-
-# Install dependencies
-npm install
-
-# Start the development server
-npm run dev
-```
-</details>
+1. Open a new terminal and navigate to the site directory:
+   ```bash
+   cd site
+   ```
+2. Install the Node modules:
+   ```bash
+   npm install
+   ```
+3. Start the Vite development server:
+   ```bash
+   npm run dev
+   ```
+4. Open your browser and navigate to the local URL provided by Vite (usually `http://localhost:5173`).
 
 ---
 
-<div align="center">
-  <img src="https://capsule-render.vercel.app/api?type=waving&color=timeGradient&height=150&section=footer&text=Engineered%20for%20the%20Future&fontSize=20&fontAlignY=40" alt="Footer" />
-</div>
+## 📱 How to Use the Telegram Bot
+
+Once the backend is running, the Telegram bot is active. Open Telegram and navigate to your bot:
+
+1. **Send `/start` or `/status`**: This pulls up the main control panel.
+2. **Add Projects & Jobs**: Follow the interactive conversational flow to add new job listings or construction projects to the database. They will appear on the React frontend instantly.
+3. **Manage Meta & SEO**: Click "Edit Meta Title" or "Edit Meta Desc" to update the site's SEO tags in real-time.
+4. **Maintenance Mode**: Toggle the site into maintenance mode with a single button click.
+5. **Receive Inquiries**: Whenever a user submits the Contact Form on the website, you will receive an instant push notification on Telegram!
+
+---
+
+## 👨‍💻 Developer
+
+Developed by **Sarwar** ([@techxsarwar](https://github.com/techxsarwar)). 
+Feel free to reach out or open an issue if you have any questions or feature requests!
