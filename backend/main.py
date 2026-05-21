@@ -10,6 +10,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
+import io
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import google.generativeai as genai
+
+class SubscribeRequest(BaseModel):
+    email: str
+
 # Load database helper functions
 from database import (
     init_db,
@@ -17,7 +26,9 @@ from database import (
     get_all_jobs, add_job, delete_job,
     get_all_messages, add_message, delete_message, clear_messages,
     get_all_settings, update_setting,
-    get_all_fleet, get_all_vendors, get_all_safety_logs
+    get_all_fleet, get_all_vendors, get_all_safety_logs,
+    get_all_subscribers, add_subscriber,
+    get_all_testimonials, add_testimonial
 )
 
 # Load environment variables
@@ -25,6 +36,10 @@ load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
 TELEGRAM_ADMIN_CHAT_ID = os.getenv("TELEGRAM_ADMIN_CHAT_ID")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+
+if GEMINI_API_KEY:
+    genai.configure(api_key=GEMINI_API_KEY)
 
 # --- Telegram Bot Commands & Lifecycle ---
 bot_running = False
@@ -44,8 +59,12 @@ bot_running = False
     SET_PRIVACY,
     SET_TERMS,
     SET_META_TITLE,
-    SET_META_DESC
-) = range(14)
+    SET_META_DESC,
+    SET_BROADCAST_MSG,
+    ADD_TESTIMONIAL_NAME,
+    ADD_TESTIMONIAL_ROLE,
+    ADD_TESTIMONIAL_TEXT
+) = range(18)
 
 def is_admin(chat_id: int) -> bool:
     return str(chat_id) == str(TELEGRAM_ADMIN_CHAT_ID)
@@ -102,6 +121,13 @@ if TELEGRAM_BOT_TOKEN and TELEGRAM_ADMIN_CHAT_ID:
                 [
                     InlineKeyboardButton("🌐 Edit Meta Title", callback_data="start_meta_title_flow"),
                     InlineKeyboardButton("🌐 Edit Meta Desc", callback_data="start_meta_desc_flow"),
+                ],
+                [
+                    InlineKeyboardButton("📊 View Analytics", callback_data="view_analytics"),
+                    InlineKeyboardButton("📢 Broadcast", callback_data="start_broadcast_flow"),
+                ],
+                [
+                    InlineKeyboardButton("💬 Add Testimonial", callback_data="start_testimonial_flow"),
                 ],
                 [
                     InlineKeyboardButton("🔄 Refresh Dashboard", callback_data="refresh_status"),
@@ -672,16 +698,130 @@ if TELEGRAM_BOT_TOKEN and TELEGRAM_ADMIN_CHAT_ID:
 
         # Cancellation Handlers
         async def cancel_flow(update: Update, context: ContextTypes.DEFAULT_TYPE):
-            await update.message.reply_text("❌ Action cancelled.")
+            await update.message.reply_text("✅ Action cancelled.")
             await send_status_message_direct(context.bot)
             return ConversationHandler.END
 
         async def cancel_flow_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
             query = update.callback_query
             await query.answer()
-            await query.edit_message_text("❌ Action cancelled.")
+            await query.edit_message_text("✅ Action cancelled.")
             await send_status_message_direct(context.bot)
             return ConversationHandler.END
+
+        # --- Analytics ---
+        async def view_analytics(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            query = update.callback_query
+            chat_id = query.message.chat.id if query else update.effective_chat.id
+            if not is_admin(chat_id): return
+            if query: await query.answer()
+
+            projects = get_all_projects()
+            jobs = get_all_jobs()
+            subs = get_all_subscribers()
+            
+            plt.figure(figsize=(6, 4))
+            categories = ['Projects', 'Active Jobs', 'Subscribers']
+            values = [len(projects), len(jobs), len(subs)]
+            plt.bar(categories, values, color=['#e6b800', '#2d2d2d', '#009688'])
+            plt.title('Database Overview')
+            
+            buf = io.BytesIO()
+            plt.savefig(buf, format='png')
+            buf.seek(0)
+            plt.close()
+            
+            await context.bot.send_photo(chat_id=chat_id, photo=buf, caption="📈 Current Database Overview")
+            await send_status_message_direct(context.bot)
+
+        # --- Broadcast / Newsletter ---
+        async def start_broadcast_flow(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            query = update.callback_query
+            chat_id = query.message.chat.id if query else update.effective_chat.id
+            if not is_admin(chat_id): return ConversationHandler.END
+            if query: await query.answer()
+            
+            subs = get_all_subscribers()
+            text = f"📢 **Broadcast Message**\n\nYou have {len(subs)} subscribers.\nEnter the message you want to blast out:"
+            keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_flow")]]
+            if query:
+                await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+            else:
+                await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+            return SET_BROADCAST_MSG
+
+        async def set_broadcast_msg(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            if not is_admin(update.effective_chat.id): return ConversationHandler.END
+            msg_text = update.message.text.strip()
+            subs = get_all_subscribers()
+            
+            for sub in subs:
+                print(f"[MAIL_MOCK] Sending to {sub['email']}: {msg_text}")
+            
+            await update.message.reply_text(f"✅ Broadcast sent to {len(subs)} subscribers!\n*(Check console for mock output)*")
+            await send_status_message_direct(context.bot)
+            return ConversationHandler.END
+
+        # --- Testimonials ---
+        async def start_testimonial_flow(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            query = update.callback_query
+            chat_id = query.message.chat.id if query else update.effective_chat.id
+            if not is_admin(chat_id): return ConversationHandler.END
+            if query: await query.answer()
+            
+            text = "💬 **Add Testimonial**\n\nEnter the client's Name:"
+            keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_flow")]]
+            if query:
+                await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+            else:
+                await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+            return ADD_TESTIMONIAL_NAME
+            
+        async def testimonial_name(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            if not is_admin(update.effective_chat.id): return ConversationHandler.END
+            context.user_data['t_name'] = update.message.text.strip()
+            await update.message.reply_text("Enter the client's Role/Company:")
+            return ADD_TESTIMONIAL_ROLE
+
+        async def testimonial_role(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            if not is_admin(update.effective_chat.id): return ConversationHandler.END
+            context.user_data['t_role'] = update.message.text.strip()
+            await update.message.reply_text("Enter the Testimonial text:")
+            return ADD_TESTIMONIAL_TEXT
+
+        async def testimonial_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            if not is_admin(update.effective_chat.id): return ConversationHandler.END
+            t_text = update.message.text.strip()
+            name = context.user_data.get('t_name', 'Unknown')
+            role = context.user_data.get('t_role', 'Unknown')
+            add_testimonial(name, role, t_text)
+            await update.message.reply_text(f"✅ Testimonial added for {name}.")
+            await send_status_message_direct(context.bot)
+            return ConversationHandler.END
+
+        # --- AI Assistant ---
+        async def ai_assistant_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            if not is_admin(update.effective_chat.id): return
+            if not GEMINI_API_KEY:
+                await update.message.reply_text("❌ Gemini API Key not set.")
+                return
+                
+            user_msg = update.message.text.strip()
+            msg = await update.message.reply_text("🤖 Thinking...")
+            
+            try:
+                projects = get_all_projects()
+                jobs = get_all_jobs()
+                msgs = get_all_messages()
+                context_str = f"Projects: {len(projects)}, Jobs: {len(jobs)}, Recent Inquiries: {len(msgs)}."
+                
+                model = genai.GenerativeModel("gemini-1.5-flash")
+                response = model.generate_content(f"You are the AI assistant for Vertical Constructions. Context: {context_str}. User says: {user_msg}")
+                await msg.edit_text(response.text)
+            except Exception as e:
+                await msg.edit_text(f"❌ AI Error: {e}")
+
+        # --- Register Application Handlers ---
 
     except ImportError:
         print("python-telegram-bot package is not loaded yet.")
@@ -811,6 +951,28 @@ async def lifespan(app: FastAPI):
                 fallbacks=[CommandHandler("cancel", cancel_flow), CallbackQueryHandler(cancel_flow_cb, pattern="^cancel_flow$")],
             )
             bot_app.add_handler(meta_desc_conv)
+
+            bot_app.add_handler(CallbackQueryHandler(view_analytics, pattern="^view_analytics$"))
+
+            broadcast_conv = ConversationHandler(
+                entry_points=[CallbackQueryHandler(start_broadcast_flow, pattern="^start_broadcast_flow$")],
+                states={SET_BROADCAST_MSG: [MessageHandler(filters.TEXT & ~filters.COMMAND, set_broadcast_msg)]},
+                fallbacks=[CommandHandler("cancel", cancel_flow), CallbackQueryHandler(cancel_flow_cb, pattern="^cancel_flow$")],
+            )
+            bot_app.add_handler(broadcast_conv)
+
+            test_conv = ConversationHandler(
+                entry_points=[CallbackQueryHandler(start_testimonial_flow, pattern="^start_testimonial_flow$")],
+                states={
+                    ADD_TESTIMONIAL_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, testimonial_name)],
+                    ADD_TESTIMONIAL_ROLE: [MessageHandler(filters.TEXT & ~filters.COMMAND, testimonial_role)],
+                    ADD_TESTIMONIAL_TEXT: [MessageHandler(filters.TEXT & ~filters.COMMAND, testimonial_text)]
+                },
+                fallbacks=[CommandHandler("cancel", cancel_flow), CallbackQueryHandler(cancel_flow_cb, pattern="^cancel_flow$")],
+            )
+            bot_app.add_handler(test_conv)
+
+            bot_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, ai_assistant_handler))
 
             # Register Command Handlers
             bot_app.add_handler(CommandHandler("start", start_command))
@@ -993,6 +1155,16 @@ def api_get_vendors():
 @app.get("/api/safety")
 def api_get_safety():
     return get_all_safety_logs()
+
+@app.get("/api/testimonials")
+def api_get_testimonials():
+    return get_all_testimonials()
+
+@app.post("/api/subscribe")
+def api_subscribe(req: SubscribeRequest):
+    date_str = datetime.now().isoformat()
+    add_subscriber(req.email, date_str)
+    return {"status": "success"}
 
 if __name__ == "__main__":
     import uvicorn

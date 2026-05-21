@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import './HomePage.css'
 
@@ -65,6 +65,15 @@ function AnimatedSection({ children, className = '', ...props }: AnimatedSection
 }
 
 export default function HomePage() {
+  const [testimonials, setTestimonials] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch('http://localhost:8000/api/testimonials')
+      .then(res => res.json())
+      .then(data => setTestimonials(data))
+      .catch(err => console.error(err));
+  }, []);
+
   return (
     <div className="home-page" id="home-page">
       {/* ===== HERO ===== */}
@@ -165,6 +174,26 @@ export default function HomePage() {
           </div>
         </AnimatedSection>
       </section>
+
+      {/* ===== TESTIMONIALS ===== */}
+      {testimonials.length > 0 && (
+        <section className="testimonials section-padding" style={{background: 'var(--surface-container-low)'}}>
+          <AnimatedSection className="container">
+            <h2 className="headline-lg" style={{textAlign: 'center', marginBottom: 48}}>What Our Clients Say</h2>
+            <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24}}>
+              {testimonials.map(t => (
+                <div key={t.id} style={{background: 'var(--surface-container)', padding: 32, borderRadius: 8, border: '1px solid var(--outline-variant)'}}>
+                  <p className="body-lg" style={{fontStyle: 'italic', marginBottom: 24}}>"{t.text}"</p>
+                  <div>
+                    <h4 className="title-md" style={{color: 'var(--electric-yellow)'}}>{t.name}</h4>
+                    <p className="label-md" style={{color: 'var(--on-surface-variant)'}}>{t.role}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </AnimatedSection>
+        </section>
+      )}
 
       {/* ===== CTA BANNER ===== */}
       <section className="cta-banner" id="cta-section">

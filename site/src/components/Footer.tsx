@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAdmin } from '../context/AdminContext'
 import './Footer.css'
@@ -57,6 +58,34 @@ export default function Footer() {
               {settings.contactPhone}
             </a>
           </p>
+        </div>
+
+        <div className="footer__links-col">
+          <h4 className="footer__col-title">Newsletter</h4>
+          <p className="footer__contact-text" style={{marginBottom: 12}}>
+            Subscribe for the latest structural insights.
+          </p>
+          <form 
+            onSubmit={(e) => {
+              e.preventDefault();
+              const formData = new FormData(e.currentTarget);
+              const email = formData.get('email');
+              if (email) {
+                fetch('http://localhost:8000/api/subscribe', {
+                  method: 'POST',
+                  headers: {'Content-Type': 'application/json'},
+                  body: JSON.stringify({email})
+                }).then(() => {
+                  alert('Subscribed successfully!');
+                  (e.target as HTMLFormElement).reset();
+                }).catch(err => console.error(err));
+              }
+            }}
+            style={{display: 'flex', gap: '8px'}}
+          >
+            <input type="email" name="email" placeholder="Your email address" required style={{flex: 1, padding: '8px 12px', background: 'var(--surface-container)', border: '1px solid var(--outline)', color: 'var(--on-surface)', borderRadius: '4px'}} />
+            <button type="submit" className="btn-primary" style={{padding: '8px 16px', borderRadius: '4px'}}>Join</button>
+          </form>
         </div>
       </div>
 

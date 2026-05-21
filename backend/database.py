@@ -87,6 +87,23 @@ def init_db():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS subscribers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT NOT NULL UNIQUE,
+            date TEXT NOT NULL
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS testimonials (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            role TEXT NOT NULL,
+            text TEXT NOT NULL
+        )
+    """)
+
     conn.commit()
 
     # Seed initial settings
@@ -355,3 +372,42 @@ def get_all_safety_logs():
     logs = conn.execute("SELECT * FROM safety_logs").fetchall()
     conn.close()
     return [dict(l) for l in logs]
+
+# --- Subscribers Operations ---
+def get_all_subscribers():
+    conn = get_db_connection()
+    subs = conn.execute("SELECT * FROM subscribers").fetchall()
+    conn.close()
+    return [dict(s) for s in subs]
+
+def add_subscriber(email, date_str):
+    conn = get_db_connection()
+    try:
+        conn.execute(
+            "INSERT INTO subscribers (email, date) VALUES (?, ?)",
+            (email, date_str)
+        )
+        conn.commit()
+    except sqlite3.IntegrityError:
+        pass # Already subscribed
+    finally:
+        conn.close()
+
+# --- Testimonials Operations ---
+def get_all_testimonials():
+    conn = get_db_connection()
+    testimonials = conn.execute("SELECT * FROM testimonials").fetchall()
+    conn.close()
+    return [dict(t) for t in testimonials]
+
+def add_testimonial(name, role, text):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO testimonials (name, role, text) VALUES (?, ?, ?)",
+        (name, role, text)
+    )
+    t_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return t_id
