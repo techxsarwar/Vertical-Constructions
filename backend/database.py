@@ -104,6 +104,17 @@ def init_db():
         )
     """)
 
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS blogs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL,
+            slug TEXT NOT NULL UNIQUE,
+            excerpt TEXT NOT NULL,
+            content TEXT NOT NULL,
+            date TEXT NOT NULL
+        )
+    """)
+
     conn.commit()
 
     # Seed initial settings
@@ -411,3 +422,28 @@ def add_testimonial(name, role, text):
     conn.commit()
     conn.close()
     return t_id
+
+# --- Blogs Operations ---
+def get_all_blogs():
+    conn = get_db_connection()
+    blogs = conn.execute("SELECT * FROM blogs ORDER BY id DESC").fetchall()
+    conn.close()
+    return [dict(b) for b in blogs]
+
+def get_blog_by_slug(slug: str):
+    conn = get_db_connection()
+    blog = conn.execute("SELECT * FROM blogs WHERE slug = ?", (slug,)).fetchone()
+    conn.close()
+    return dict(blog) if blog else None
+
+def add_blog(title, slug, excerpt, content, date_str):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO blogs (title, slug, excerpt, content, date) VALUES (?, ?, ?, ?, ?)",
+        (title, slug, excerpt, content, date_str)
+    )
+    b_id = cursor.lastrowid
+    conn.commit()
+    conn.close()
+    return b_id

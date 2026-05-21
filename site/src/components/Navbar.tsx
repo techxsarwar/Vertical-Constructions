@@ -10,6 +10,7 @@ interface NavLinkItem {
 const NAV_LINKS: NavLinkItem[] = [
   { path: '/projects', label: 'Projects' },
   { path: '/services', label: 'Services' },
+  { path: '/blog', label: 'Insights' },
   { path: '/#sustainability', label: 'Sustainability' },
   { path: '/contact', label: 'Contact' },
 ]

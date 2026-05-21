@@ -28,7 +28,8 @@ from database import (
     get_all_settings, update_setting,
     get_all_fleet, get_all_vendors, get_all_safety_logs,
     get_all_subscribers, add_subscriber,
-    get_all_testimonials, add_testimonial
+    get_all_testimonials, add_testimonial,
+    get_all_blogs, get_blog_by_slug, add_blog
 )
 
 # Load environment variables
@@ -68,8 +69,9 @@ bot_running = False
     SET_BROADCAST_MSG,
     ADD_TESTIMONIAL_NAME,
     ADD_TESTIMONIAL_ROLE,
-    ADD_TESTIMONIAL_TEXT
-) = range(18)
+    ADD_TESTIMONIAL_TEXT,
+    GENERATE_BLOG_TOPIC
+) = range(19)
 
 def is_admin(chat_id: int) -> bool:
     return str(chat_id) == str(TELEGRAM_ADMIN_CHAT_ID)
@@ -128,10 +130,11 @@ if TELEGRAM_BOT_TOKEN and TELEGRAM_ADMIN_CHAT_ID:
                     InlineKeyboardButton("🌐 Edit Meta Desc", callback_data="start_meta_desc_flow"),
                 ],
                 [
+                    InlineKeyboardButton("📝 Generate Blog", callback_data="start_blog_flow"),
                     InlineKeyboardButton("📊 View Analytics", callback_data="view_analytics"),
-                    InlineKeyboardButton("📢 Broadcast", callback_data="start_broadcast_flow"),
                 ],
                 [
+                    InlineKeyboardButton("📢 Broadcast", callback_data="start_broadcast_flow"),
                     InlineKeyboardButton("💬 Add Testimonial", callback_data="start_testimonial_flow"),
                 ],
                 [
@@ -825,6 +828,73 @@ if TELEGRAM_BOT_TOKEN and TELEGRAM_ADMIN_CHAT_ID:
             await send_status_message_direct(context.bot)
             return ConversationHandler.END
 
+        # --- AI Blog Generator ---
+        async def start_blog_flow(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            query = update.callback_query
+            chat_id = query.message.chat.id if query else update.effective_chat.id
+            if not is_admin(chat_id): return ConversationHandler.END
+            if query: await query.answer()
+            
+            if not ai_client:
+                text = "❌ OpenRouter API Key not set. Cannot generate blogs."
+                if query: await query.edit_message_text(text)
+                else: await update.message.reply_text(text)
+                return ConversationHandler.END
+
+            text = "📝 **Generate AI Blog Post**\n\nEnter the topic or title you want to write about (e.g., 'The Future of Sustainable High-Rises'):"
+            keyboard = [[InlineKeyboardButton("❌ Cancel", callback_data="cancel_flow")]]
+            if query:
+                await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+            else:
+                await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard))
+            return GENERATE_BLOG_TOPIC
+
+        async def generate_blog_content(update: Update, context: ContextTypes.DEFAULT_TYPE):
+            if not is_admin(update.effective_chat.id): return ConversationHandler.END
+            topic = update.message.text.strip()
+            msg = await update.message.reply_text("🤖 Generating a premium 600-800 word SEO-optimized blog post... This might take 15-30 seconds.")
+            
+            try:
+                system_prompt = """
+                You are a world-class SEO content writer for a luxury commercial construction and architecture firm called Vertical Constructions.
+                Write a 600-800 word professional, highly engaging, and SEO-optimized blog post about the given topic.
+                Format the response strictly as a JSON object with the following keys:
+                {
+                  "title": "A catchy, SEO-friendly title",
+                  "slug": "url-friendly-slug-like-this",
+                  "excerpt": "A compelling 1-2 sentence summary for the blog listing.",
+                  "content": "The full blog content formatted in proper Markdown (use ## for headings, ** for bold, etc.)"
+                }
+                Return ONLY valid JSON.
+                """
+
+                response = await ai_client.chat.completions.create(
+                    model="openai/gpt-3.5-turbo",
+                    response_format={"type": "json_object"},
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": f"Topic: {topic}"}
+                    ]
+                )
+                
+                import json
+                from datetime import datetime
+                import re
+
+                result = json.loads(response.choices[0].message.content)
+                title = result.get('title', topic)
+                slug = result.get('slug', re.sub(r'[^a-z0-9]+', '-', topic.lower()).strip('-'))
+                excerpt = result.get('excerpt', '')
+                content = result.get('content', '')
+                date_str = datetime.now().strftime("%B %d, %Y")
+
+                add_blog(title, slug, excerpt, content, date_str)
+                await msg.edit_text(f"✅ **Blog Published!**\n\nTitle: {title}\nSlug: /{slug}\n\nThe post is now live on your website.")
+                await send_status_message_direct(context.bot)
+            except Exception as e:
+                await msg.edit_text(f"❌ Error generating blog: {e}")
+            return ConversationHandler.END
+
         # --- AI Assistant ---
         async def ai_assistant_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if not is_admin(update.effective_chat.id): return
@@ -1002,6 +1072,15 @@ async def lifespan(app: FastAPI):
                 fallbacks=[CommandHandler("cancel", cancel_flow), CallbackQueryHandler(cancel_flow_cb, pattern="^cancel_flow$")],
             )
             bot_app.add_handler(test_conv)
+
+            blog_conv = ConversationHandler(
+                entry_points=[CallbackQueryHandler(start_blog_flow, pattern="^start_blog_flow$")],
+                states={
+                    GENERATE_BLOG_TOPIC: [MessageHandler(filters.TEXT & ~filters.COMMAND, generate_blog_content)]
+                },
+                fallbacks=[CommandHandler("cancel", cancel_flow), CallbackQueryHandler(cancel_flow_cb, pattern="^cancel_flow$")],
+            )
+            bot_app.add_handler(blog_conv)
 
             bot_app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, ai_assistant_handler))
 
@@ -1190,6 +1269,17 @@ def api_get_safety():
 @app.get("/api/testimonials")
 def api_get_testimonials():
     return get_all_testimonials()
+
+@app.get("/api/blogs")
+def api_get_blogs():
+    return get_all_blogs()
+
+@app.get("/api/blogs/{slug}")
+def api_get_blog_by_slug(slug: str):
+    blog = get_blog_by_slug(slug)
+    if not blog:
+        raise HTTPException(status_code=404, detail="Blog not found")
+    return blog
 
 @app.post("/api/subscribe")
 def api_subscribe(req: SubscribeRequest):
