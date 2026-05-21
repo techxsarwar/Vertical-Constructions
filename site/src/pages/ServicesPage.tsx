@@ -1,10 +1,17 @@
-import { useRef, useEffect } from 'react'
+import React, { useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import './ServicesPage.css'
 
 const HERO_IMAGE = 'https://lh3.googleusercontent.com/aida-public/AB6AXuBh1CVVvuN1ypfCLNblX8NWLpk-3uLtwf1ZXOf4H9z4iSOoK_BcUfOJ85_9GMXH0VBR27wFesie_VVZDWQcUTlkMmU1iJtgnfH4D5zIOOI1ir0X4n8uv7v917juTNpEcFIVm0YXRAHmRcJ3E3E4tNYDRAx1ZOJi9fq4AdSEJS6g4CxPfwfn_nFMy4XUCsXq9c4GjfxiGW8MQDB3eZ0LetGOIsKWOmPpyxkfx9h3loCLmPu9QNNKCJbRd-pcvYprGvl7W82YSPBYgtc'
 
-const SERVICES = [
+interface ServiceItem {
+  id: string;
+  icon: string;
+  title: string;
+  description: string;
+}
+
+const SERVICES: ServiceItem[] = [
   {
     id: 'residential',
     icon: 'home_work',
@@ -25,7 +32,7 @@ const SERVICES = [
   },
 ]
 
-function useIntersection(ref) {
+function useIntersection(ref: React.RefObject<HTMLElement | null>) {
   useEffect(() => {
     const el = ref.current
     if (!el) return
@@ -43,8 +50,12 @@ function useIntersection(ref) {
   }, [ref])
 }
 
-function AnimatedSection({ children, className = '', ...props }) {
-  const ref = useRef(null)
+interface AnimatedSectionProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+}
+
+function AnimatedSection({ children, className = '', ...props }: AnimatedSectionProps) {
+  const ref = useRef<HTMLDivElement>(null)
   useIntersection(ref)
   return (
     <div ref={ref} className={`animated-section ${className}`} {...props}>

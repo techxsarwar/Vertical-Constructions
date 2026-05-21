@@ -1,8 +1,8 @@
-import { useRef, useEffect } from 'react'
+import React, { useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import './AboutPage.css'
 
-function useIntersection(ref) {
+function useIntersection(ref: React.RefObject<HTMLElement | null>) {
   useEffect(() => {
     const el = ref.current
     if (!el) return
@@ -20,8 +20,12 @@ function useIntersection(ref) {
   }, [ref])
 }
 
-function AnimatedSection({ children, className = '', ...props }) {
-  const ref = useRef(null)
+interface AnimatedSectionProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+}
+
+function AnimatedSection({ children, className = '', ...props }: AnimatedSectionProps) {
+  const ref = useRef<HTMLDivElement>(null)
   useIntersection(ref)
   return (
     <div ref={ref} className={`animated-section ${className}`} {...props}>
@@ -30,7 +34,13 @@ function AnimatedSection({ children, className = '', ...props }) {
   )
 }
 
-const TEAM = [
+interface TeamMember {
+  name: string;
+  role: string;
+  image: string;
+}
+
+const TEAM: TeamMember[] = [
   {
     name: 'Marcus Vance',
     role: 'Chief Architect',

@@ -1,7 +1,13 @@
 import { Link, useLocation } from 'react-router-dom'
 import './MobileNav.css'
 
-const MOBILE_LINKS = [
+interface MobileLinkItem {
+  path: string;
+  label: string;
+  icon: string;
+}
+
+const MOBILE_LINKS: MobileLinkItem[] = [
   { path: '/', label: 'Home', icon: 'home' },
   { path: '/projects', label: 'Projects', icon: 'architecture' },
   { path: '/services', label: 'Services', icon: 'eco' },

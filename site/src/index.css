@@ -329,12 +329,10 @@ button {
 
 /* ===== PORTFOLIO BLOOM EFFECT ===== */
 .portfolio-bloom {
-  filter: grayscale(100%);
   transition: all var(--transition-slow);
 }
 
 .portfolio-bloom:hover {
-  filter: grayscale(0%);
   border-color: var(--electric-yellow) !important;
 }
 

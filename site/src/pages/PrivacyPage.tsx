@@ -1,7 +1,7 @@
-import { useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import './LegalPage.css'
 
-function useIntersection(ref) {
+function useIntersection(ref: React.RefObject<HTMLElement | null>) {
   useEffect(() => {
     const el = ref.current
     if (!el) return
@@ -20,7 +20,7 @@ function useIntersection(ref) {
 }
 
 export default function PrivacyPage() {
-  const ref = useRef(null)
+  const ref = useRef<HTMLDivElement>(null)
   useIntersection(ref)
 
   return (

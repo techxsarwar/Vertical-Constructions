@@ -1,53 +1,10 @@
-import { useRef, useEffect } from 'react'
+import React, { useRef, useEffect } from 'react'
+import { useAdmin } from '../context/AdminContext'
 import './PortfolioPage.css'
 
 const HERO_IMAGE = 'https://lh3.googleusercontent.com/aida-public/AB6AXuB9g6YsAr-BXzFse65CTOj-Yv7OYlpKJF_0KX58LqyIBXjGjGg-jcvOb7vkZeD7hvtaIYQKxYA_8O7o4VkAhnLtFiLIkln0QEPE6JcYoD9PDvxNpBjzcKfntViJs2Gcw1N4dw8Y7EudA54asWS-qmcJzyYtaZIVsSlGHV3IfZ0TTy8SU16qkBb8O_2RuxGwjlLxKtNgMlv1hbv05fUAR0uIMc_SPHLyDdwNmESTtAXofDZXxciYOtp4ZJ2EK_as1nq405ORFyTvYnU'
 
-const PROJECTS = [
-  {
-    id: 'apex-tower',
-    title: 'The Apex Tower',
-    category: 'Commercial • 85 Stories',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAHgQxv8dpdjXJC-Ujt_H0tn-opjgIJ4R4YfSg-PTcf8zwrVzrhs-UyKRsLUJGpQyRbr0LlsyLE8UX7JP1A1YLiNdZVIdMy22jBbhqA66dmpaBCQ8slA3puX_ow5B5U6oSlw72w8AS98zSY-IlIPLyUr0UCI0AEt2YbpRCU9HMpc1_i6mNKSElSPTUIA6gNmatOSYHKlLkqD3yhmATDqZHxXZqhxOTEK2nO0924hp9QWxhmCV5vf8LWxkIY1ko9FuRcZOizRM5i-fU',
-    span: 'large',
-    icon: 'apartment',
-  },
-  {
-    id: 'foundry-complex',
-    title: 'Foundry Complex',
-    category: 'Industrial • Heavy Rail',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAudU7g9wZJN8kM1EWu6T_RE8OUZQJ0FZMJ-ZdeApszelV5DCbXHVwYyBDPtHI5lLVESJM19ojrfHaFMWeHjXncElUvhhsOawcDq7cPvT7XrDc9G_LveZAgf7Crg5UOwGUk7xpLkpzkHMt0U9hrDK9VsS0tvkKcP5wPknIrNCIYcDYcuwNlLDl5-YsQNOfD8NZnH5ABNEmV24hnFIrP_sKN6_Y_GiUg6BEPMBGEPc9EH6hw3Brx37fwqIds9lW6NreKRZx7vDCXHJA',
-    span: 'tall',
-    icon: null,
-  },
-  {
-    id: 'green-residences',
-    title: 'Green Residences',
-    category: 'Residential • Luxury',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDAfFMYFh0YP26ZCLkON4Crt0SGvVxfgE3sXu4fV5QBulrmIRaffCOkbAxVt9NN10ryhOlOchpm3UaZp8qgsD2eA87ZIBuzIO0dbOvF7ob95PEyIxPkawW80b3cAeBCcT84BTaGjPAiI5mdfFseM52drjMn4a1dpqGYbZNG831adAF7srrGopYwXfkc9sTT3nIDK_K0qZNo6SzwLCEhANNHLRvgZpmstNfaVDwOU9K6fmbrL8ZWE1gUAXcyOGxwEm5v-6G3HbkT7WE',
-    span: 'small',
-    icon: 'precision_manufacturing',
-  },
-  {
-    id: 'atrium-hq',
-    title: 'Atrium HQ',
-    category: 'Corporate • Headquarters',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCPUXwuxZSMDWjPduq8LF1hQfYbtHMMlFYEEQ1YGd_qcD8t5Gqs6ejTFzC9K9B-zOZhXpVsbSz4uRNOmKTEp2oZ2raG5bWdn7m7SlPjfKFGBPzfhnt8llgr-xcM0LyKBC7oDbJ51INylxNN-XBuGscy00sISr23-fstPOip17_X3IcieIgWofKol3b7KnDZ81mcn4hch28nqZmpIk8Ww8xTGZssolTxVIAalciYDqaTsSakkR2FB6zXBKU89ALbK031661_kpMRxEg',
-    span: 'small',
-    icon: 'engineering',
-  },
-  {
-    id: 'river-gateway',
-    title: 'River Gateway',
-    category: 'Infrastructure • 2.4 Miles',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBZSt8DyOiyuc3D0YvzOV9Jdv6p3zqa1c41iPnk0Ifax5pnO8pm20-EXQPJfcwJFQnfT2xPv9OtSS-3bPjpE9OcTYPJvwt7azVCzNeiI1xnESPKX9SOccKQbjZ4zNvjuWGnEFijdVqZLORetO7QXnzBxfJWm2Qyvyk0PMno0Fxb1XrWG_JkB4s8pAeN6Utx3R9zlEqhDLKQAbACyu9J_wQj6IIowCdT7nnSOfN5JJFswidCpbudUKNSDzlIpoxPTb5Eb3G_EKMGBvA',
-    span: 'wide',
-    badge: 'Sustainable Materials',
-    icon: null,
-  },
-]
-
-function useIntersection(ref) {
+function useIntersection(ref: React.RefObject<HTMLElement | null>) {
   useEffect(() => {
     const el = ref.current
     if (!el) return
@@ -65,8 +22,12 @@ function useIntersection(ref) {
   }, [ref])
 }
 
-function AnimatedSection({ children, className = '', ...props }) {
-  const ref = useRef(null)
+interface AnimatedSectionProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+}
+
+function AnimatedSection({ children, className = '', ...props }: AnimatedSectionProps) {
+  const ref = useRef<HTMLDivElement>(null)
   useIntersection(ref)
   return (
     <div ref={ref} className={`animated-section ${className}`} {...props}>
@@ -76,6 +37,8 @@ function AnimatedSection({ children, className = '', ...props }) {
 }
 
 export default function PortfolioPage() {
+  const { projects } = useAdmin()
+
   return (
     <div className="portfolio-page" id="portfolio-page">
       {/* ===== HERO ===== */}
@@ -119,7 +82,7 @@ export default function PortfolioPage() {
         </div>
 
         <div className="portfolio-masonry">
-          {PROJECTS.map((project, i) => (
+          {projects.map((project, i) => (
             <AnimatedSection
               key={project.id}
               className={`portfolio-item portfolio-item--${project.span} delay-${i + 1}`}

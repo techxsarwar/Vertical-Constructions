@@ -81,15 +81,16 @@
 .services-hero__image {
   position: absolute;
   inset: 0;
-  background-size: cover;
-  background-position: center;
-  filter: grayscale(100%);
-  transition: all var(--transition-slower);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.3;
+  transition: all var(--transition-slow);
   border: 2px solid transparent;
 }
 
 .services-hero__image-wrap:hover .services-hero__image {
-  filter: grayscale(0%);
+  opacity: 1;
   border-color: var(--electric-yellow);
 }
 
@@ -170,6 +171,11 @@
 
 .service-card:hover .service-card__top-line {
   transform: scaleX(1);
+}
+
+.services-card:hover .services-card__bg {
+  opacity: 0.8;
+  transform: scale(1.05);
 }
 
 .service-card__icon-wrap {

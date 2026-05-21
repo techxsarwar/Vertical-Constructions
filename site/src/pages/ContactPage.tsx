@@ -1,9 +1,11 @@
-import { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import { LatLngExpression } from 'leaflet'
+import { useAdmin } from '../context/AdminContext'
 import 'leaflet/dist/leaflet.css'
 import './ContactPage.css'
 
-function useIntersection(ref) {
+function useIntersection(ref: React.RefObject<HTMLElement | null>) {
   useEffect(() => {
     const el = ref.current
     if (!el) return
@@ -21,8 +23,12 @@ function useIntersection(ref) {
   }, [ref])
 }
 
-function AnimatedSection({ children, className = '', ...props }) {
-  const ref = useRef(null)
+interface AnimatedSectionProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+}
+
+function AnimatedSection({ children, className = '', ...props }: AnimatedSectionProps) {
+  const ref = useRef<HTMLDivElement>(null)
   useIntersection(ref)
   return (
     <div ref={ref} className={`animated-section ${className}`} {...props}>
@@ -31,7 +37,13 @@ function AnimatedSection({ children, className = '', ...props }) {
   )
 }
 
-const CONTACT_INFO = [
+interface ContactInfoCard {
+  icon: string;
+  title: string;
+  lines: string[];
+}
+
+const CONTACT_INFO: ContactInfoCard[] = [
   {
     icon: 'location_on',
     title: 'Head Office',
@@ -49,8 +61,17 @@ const CONTACT_INFO = [
   },
 ]
 
+interface ContactFormData {
+  name: string;
+  email: string;
+  phone: string;
+  service: string;
+  message: string;
+}
+
 export default function ContactPage() {
-  const [formData, setFormData] = useState({
+  const { addMessage } = useAdmin()
+  const [formData, setFormData] = useState<ContactFormData>({
     name: '',
     email: '',
     phone: '',
@@ -59,15 +80,18 @@ export default function ContactPage() {
   })
   const [submitted, setSubmitted] = useState(false)
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    addMessage(formData)
     setSubmitted(true)
     setTimeout(() => setSubmitted(false), 4000)
   }
+
+  const position: LatLngExpression = [28.6258, 77.3786]
 
   return (
     <div className="contact-page" id="contact-page">
@@ -209,7 +233,7 @@ export default function ContactPage() {
             {/* Interactive Map */}
             <div className="contact-map">
               <MapContainer 
-                center={[28.6258, 77.3786]} 
+                center={position} 
                 zoom={14} 
                 scrollWheelZoom={false}
                 style={{ height: '100%', width: '100%' }}
@@ -218,7 +242,7 @@ export default function ContactPage() {
                   attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
                   url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
                 />
-                <Marker position={[28.6258, 77.3786]}>
+                <Marker position={position}>
                   <Popup>
                     <strong>Vertical Constructions HQ</strong><br />
                     Sector 62, Noida

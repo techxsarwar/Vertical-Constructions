@@ -1,10 +1,17 @@
-import { useEffect, useRef } from 'react'
+import React, { useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import './HomePage.css'
 
 const HERO_IMAGE = 'https://lh3.googleusercontent.com/aida-public/AB6AXuBMJmV9oMuPRo7caBfDgxUBNDSmlfLnDNxRrq-oF_5OreAtPpfq3dxJRPWwCLZhPetCxlzI1F-vvzvxYLOi5Irb8J3qn9bALG8OTFw-PS_JIF1SufZ18u2K8JUV4VnOL4oLUpZJZLuOtWIJZyuElcG0brS9TDX3ZIPl0XLtPliJ4AsSiPvBWIAiIjSsZTsrF29rt5mceR_QfLn2Rir64ShnmJ4AXeGnpy4wNXH3LOHtB3Oz2W_dU_-Q9alJ8b3PzAYhAFV4-uXIPvs'
 
-const IMPACT_CARDS = [
+interface ImpactCard {
+  icon: string;
+  badge: string;
+  title: string;
+  description: string;
+}
+
+const IMPACT_CARDS: ImpactCard[] = [
   {
     icon: 'recycling',
     badge: 'Zero Waste Protocol',
@@ -25,7 +32,7 @@ const IMPACT_CARDS = [
   },
 ]
 
-function useIntersection(ref, options = {}) {
+function useIntersection(ref: React.RefObject<HTMLElement | null>, options: IntersectionObserverInit = {}) {
   useEffect(() => {
     const el = ref.current
     if (!el) return
@@ -43,8 +50,12 @@ function useIntersection(ref, options = {}) {
   }, [ref, options])
 }
 
-function AnimatedSection({ children, className = '', ...props }) {
-  const ref = useRef(null)
+interface AnimatedSectionProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+}
+
+function AnimatedSection({ children, className = '', ...props }: AnimatedSectionProps) {
+  const ref = useRef<HTMLDivElement>(null)
   useIntersection(ref)
   return (
     <div ref={ref} className={`animated-section ${className}`} {...props}>

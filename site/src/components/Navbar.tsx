@@ -2,7 +2,12 @@ import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import './Navbar.css'
 
-const NAV_LINKS = [
+interface NavLinkItem {
+  path: string;
+  label: string;
+}
+
+const NAV_LINKS: NavLinkItem[] = [
   { path: '/projects', label: 'Projects' },
   { path: '/services', label: 'Services' },
   { path: '/#sustainability', label: 'Sustainability' },

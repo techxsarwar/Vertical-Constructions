@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
+import { useAdmin } from '../context/AdminContext'
 import './Footer.css'
 
 export default function Footer() {
+  const { settings } = useAdmin()
   return (
     <footer className="footer" id="main-footer">
       <div className="footer__top">
@@ -46,10 +48,14 @@ export default function Footer() {
             Uttar Pradesh, India
           </p>
           <p className="footer__contact-text footer__contact-text--highlight">
-            projects@verticalconstructions.in
+            <a href={`mailto:${settings.contactEmail}`} style={{color: 'inherit', textDecoration: 'none'}}>
+              {settings.contactEmail}
+            </a>
           </p>
           <p className="footer__contact-text footer__contact-text--highlight">
-            +91 98765 43210
+            <a href={`tel:${settings.contactPhone}`} style={{color: 'inherit', textDecoration: 'none'}}>
+              {settings.contactPhone}
+            </a>
           </p>
         </div>
       </div>

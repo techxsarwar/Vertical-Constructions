@@ -1,8 +1,9 @@
-import { useRef, useEffect } from 'react'
+import React, { useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useAdmin } from '../context/AdminContext'
 import './CareersPage.css'
 
-function useIntersection(ref) {
+function useIntersection(ref: React.RefObject<HTMLElement | null>) {
   useEffect(() => {
     const el = ref.current
     if (!el) return
@@ -20,8 +21,12 @@ function useIntersection(ref) {
   }, [ref])
 }
 
-function AnimatedSection({ children, className = '', ...props }) {
-  const ref = useRef(null)
+interface AnimatedSectionProps extends React.HTMLAttributes<HTMLDivElement> {
+  children: React.ReactNode;
+}
+
+function AnimatedSection({ children, className = '', ...props }: AnimatedSectionProps) {
+  const ref = useRef<HTMLDivElement>(null)
   useIntersection(ref)
   return (
     <div ref={ref} className={`animated-section ${className}`} {...props}>
@@ -30,38 +35,9 @@ function AnimatedSection({ children, className = '', ...props }) {
   )
 }
 
-const JOBS = [
-  {
-    id: 1,
-    title: 'Senior Structural Engineer',
-    department: 'Engineering',
-    location: 'Noida, UP',
-    type: 'Full-time',
-  },
-  {
-    id: 2,
-    title: 'Project Manager (Commercial)',
-    department: 'Operations',
-    location: 'Gurugram, HR',
-    type: 'Full-time',
-  },
-  {
-    id: 3,
-    title: 'Architectural Draftsman',
-    department: 'Design',
-    location: 'Noida, UP',
-    type: 'Contract',
-  },
-  {
-    id: 4,
-    title: 'Site Safety Inspector',
-    department: 'Safety',
-    location: 'Multiple Locations',
-    type: 'Full-time',
-  },
-]
-
 export default function CareersPage() {
+  const { jobs } = useAdmin()
+
   return (
     <div className="careers-page" id="careers-page">
       {/* HERO */}
@@ -114,7 +90,7 @@ export default function CareersPage() {
           </AnimatedSection>
 
           <div className="jobs__list">
-            {JOBS.map((job, i) => (
+            {jobs.map((job, i) => (
               <AnimatedSection key={job.id} className={`job-card delay-${i + 1}`}>
                 <div className="job-card__info">
                   <h3 className="headline-lg job-card__title">{job.title}</h3>
